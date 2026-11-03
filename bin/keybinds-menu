@@ -6,8 +6,8 @@ hyprctl binds -j | jq -r '
                  (if (m/4|floor)%2==1 then "CTRL" else empty end),
                  (if (m/8|floor)%2==1 then "ALT" else empty end) ] | join(" + ");
   .[] | select(.description != "")
-  | ((mods(.modmask) | if . == "" then "" else . + " + " end) + .key) as $k
+  | (if .key == "" then ({"10":"1","11":"2","12":"3","13":"4","14":"5","15":"6","16":"7","17":"8","18":"9","19":"0","20":"-","21":"="}[.keycode|tostring] // "key \(.keycode)") else .key end) as $key
+  | ((mods(.modmask) | if . == "" then "" else . + " + " end) + $key) as $k
   | "\($k)\t\(.description)"' \
 | awk -F'\t' '!seen[$0]++ { printf "%-34s %s\n", $1, $2 }' \
-| sed -E "s/code:10/1/;s/code:11/2/;s/code:12/3/;s/code:13/4/;s/code:14/5/;s/code:15/6/;s/code:16/7/;s/code:17/8/;s/code:18/9/;s/code:19/0/;s/code:20/-/;s/code:21/=/" \
 | rofi -dmenu -i -p "" -theme-str 'mainbox {children: [inputbar, listview];} window {width: 760px;} listview {lines: 14;} entry {placeholder: "Search keybindings…";}' >/dev/null

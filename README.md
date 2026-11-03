@@ -2,76 +2,38 @@
 
 # paleOS
 
-**A clean, monochrome Arch Linux + Hyprland setup.**
-Just the OS layer: login screen, bar, panels, menu, workspaces and keybinds. You add the apps.
+**Arch Linux, made calm.**
 
-![Login screen](docs/login.png)
+![paleOS login screen](docs/images/login.png)
 
 </div>
 
-## Look
+paleOS is Arch Linux with a quiet, black-and-white desktop on top. You get Arch as it is —
+rolling, fast, nothing hidden — plus the things you'd otherwise spend a weekend setting up:
+a login screen, a top bar, click-to-open panels, an app menu, sensible keybindings, a lock
+screen and a screensaver. It's inspired by [Omarchy](https://github.com/basecamp/omarchy),
+but it ships only the OS layer. The apps are up to you.
 
-![Top bar](docs/bar.png)
+Install it from the **paleOS ISO** (a guided installer: pick your kernel, disk,
+encryption and extras) or put it on an **existing Arch install** with one command.
 
-<table>
-  <tr>
-    <td><img src="docs/menu.png" alt="Menu" width="300"></td>
-    <td><img src="docs/panel-sound.png" alt="Sound panel" width="300"><br><img src="docs/panel-bluetooth.png" alt="Bluetooth panel" width="300"></td>
-    <td><img src="docs/panel-network.png" alt="Network panel" width="300"><br><img src="docs/panel-display.png" alt="Display panel" width="300"></td>
-  </tr>
-</table>
+![Top bar](docs/images/bar.png)
 
-## What's in it
+<table><tr>
+  <td><img src="docs/images/menu.png" alt="Menu" width="260"></td>
+  <td><img src="docs/images/panel-sound.png" alt="Sound" width="300"><br><img src="docs/images/panel-display.png" alt="Display" width="300"></td>
+  <td><img src="docs/images/panel-network.png" alt="Network" width="300"><br><img src="docs/images/panel-bluetooth.png" alt="Bluetooth" width="300"></td>
+</tr></table>
 
-- **Login screen** — animated Arch logo over a night sky, password at the bottom, power menu in the corner
-- **Top bar** — workspaces, clock, tray, and one icon each for sound, network, bluetooth and display
-- **Panels** — volume and output picker, Wi-Fi and speed test, Bluetooth devices, display scale and night light
-- **Menu** (`SUPER + SPACE`) — Apps, Learn, Trigger, Style, Display, Setup, Install, Remove, Update, About, System.
-  Type to search apps; `=` calculator, `:` emoji, anything else searches the web
-- **Lock screen, screensaver and boot splash** — matching black and white
-- **Gaming-ready defaults** — GameMode, FreeSync in fullscreen, low-latency tearing for games
+## Documentation
 
-## Install
-
-On a fresh Arch install with Hyprland (e.g. `archinstall` → Desktop → Hyprland):
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/Bettencourtzw/paleOS/main/boot.sh | bash
-```
-
-or
-
-```bash
-git clone https://github.com/Bettencourtzw/paleOS && cd paleOS && ./install.sh
-```
-
-The installer asks before it does anything big. It does **not** force a system update, and it backs up any config it replaces to `~/.config/paleos-backup-<date>`. Reboot when it's done.
-
-## Keys
-
-| Keys | Action |
+| | |
 |---|---|
-| `SUPER + SPACE` | Menu and app search |
-| `SUPER + RETURN` | Terminal |
-| `SUPER + W` | Close window |
-| `SUPER + 1 … 0` | Switch workspace |
-| `SUPER + SHIFT + 1 … 0` | Move window to workspace |
-| `SUPER + SHIFT + S` | Screenshot to clipboard |
-| `SUPER + ESC` | System menu |
-| `SUPER + CTRL + L` | Lock |
-| `SUPER + K` | Show every keybinding |
+| [Install](docs/install.md) | From the ISO, or on top of an Arch install you already have |
+| [Using paleOS](docs/using.md) | Menu, panels, keybindings, screenshots, gaming |
+| [Make it yours](docs/customize.md) | The Customize app, colors, bar, menu entries, keys, monitors |
+| [Privacy & security](docs/security.md) | Encrypted DNS with no leaks, firewall, hardening |
+| [How it's built](docs/architecture.md) | What lives where, and how the pieces fit |
+| [Building the ISO](docs/iso.md) | Make your own installer image |
 
-## Make it yours
-
-| Change | File |
-|---|---|
-| Bar | `~/.config/waybar/` (`colors.css`, `config.jsonc`, `style.css`) |
-| Menu entries | `~/.local/bin/menu` |
-| Menu colors | `~/.config/rofi/colors.rasi` |
-| Panel colors | `~/.config/quickshell/Theme.qml` |
-| Keybindings | `~/.config/hypr/bindings.lua` |
-| Monitor | `~/.config/hypr/monitors.lua` |
-
-## Credits
-
-Inspired by [Omarchy](https://github.com/basecamp/omarchy). MIT licensed.
+MIT licensed.

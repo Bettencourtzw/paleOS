@@ -5,7 +5,7 @@ hyprland hyprlock hypridle hyprpaper hyprpicker hyprsunset xdg-desktop-portal-hy
 waybar quickshell rofi rofi-calc rofi-emoji mako swayosd foot nautilus
 
 # Tools used by the menu, screenshots and panels
-grim slurp satty wl-clipboard playerctl brightnessctl libnotify jq python neovim fzf btop xdg-utils
+grim slurp satty wl-clipboard playerctl brightnessctl libnotify jq python neovim fzf btop xdg-utils pciutils gtk3
 
 # Sound, network, bluetooth
 pipewire wireplumber pipewire-pulse networkmanager bluez bluez-utils
@@ -18,3 +18,6 @@ sddm plymouth
 
 # Gaming-ready defaults (AMD tuning is optional in the installer)
 gamemode power-profiles-daemon
+
+# Safety
+ufw

@@ -11,9 +11,9 @@ function o.bind(keys, description, dispatcher, options)
 end
 
 local terminal = "foot"
-local browser  = "sh -c 'gtk-launch \"$(xdg-settings get default-web-browser)\"'"
+local browser  = "sh -c 'b=$(xdg-settings get default-web-browser); [ -n \"$b\" ] && gtk-launch \"$b\" || notify-send \"No browser installed\" \"Install one from SUPER+SPACE → Install\"'"
 local files    = "nautilus --new-window"
-local tui      = function(cmd) return "foot --app-id=tui." .. cmd .. " -e " .. cmd end
+local tui      = function(cmd) return "foot -e " .. cmd end
 
 ---- APPS ---------------------------------------------------------------------
 o.bind("SUPER + RETURN", "Terminal", terminal)
@@ -26,7 +26,7 @@ o.bind("SUPER + K", "Show key bindings", "~/.local/bin/keybinds-menu")
 o.bind("SUPER + ESCAPE", "System menu", "~/.local/bin/launcher system")
 o.bind("SUPER + ALT + SPACE", "Setup menu", "~/.local/bin/launcher setup")
 o.bind("XF86PowerOff", "Power menu", "~/.local/bin/launcher system", { locked = true })
-o.bind("XF86Calculator", "Calculator", "gnome-calculator")
+o.bind("XF86Calculator", "Calculator", "~/.local/bin/launcher calc")
 
 o.bind("SUPER + CTRL + A", "Audio controls", "qs ipc call panel toggle sound")
 o.bind("SUPER + CTRL + B", "Bluetooth controls", "qs ipc call panel toggle bluetooth")
@@ -145,6 +145,8 @@ o.bind("XF86AudioMute", "Mute", "swayosd-client --output-volume mute-toggle", { 
 o.bind("XF86AudioMicMute", "Mute microphone", "swayosd-client --input-volume mute-toggle", { locked = true })
 o.bind("ALT + XF86AudioRaiseVolume", "Volume up precise", "swayosd-client --output-volume +1", { locked = true, repeating = true })
 o.bind("ALT + XF86AudioLowerVolume", "Volume down precise", "swayosd-client --output-volume -1", { locked = true, repeating = true })
+o.bind("XF86MonBrightnessUp", "Brightness up", "swayosd-client --brightness raise", { locked = true, repeating = true })
+o.bind("XF86MonBrightnessDown", "Brightness down", "swayosd-client --brightness lower", { locked = true, repeating = true })
 o.bind("XF86AudioNext", "Next track", "swayosd-client --playerctl next", { locked = true })
 o.bind("XF86AudioPause", "Pause", "swayosd-client --playerctl play-pause", { locked = true })
 o.bind("XF86AudioPlay", "Play", "swayosd-client --playerctl play-pause", { locked = true })

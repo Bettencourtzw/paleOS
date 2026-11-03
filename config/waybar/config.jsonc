@@ -64,12 +64,6 @@
     "modules": ["custom/expand-icon", "tray"]
   },
   "custom/expand-icon": { "format": "󰅁", "tooltip": false },
-  "cpu": {
-    "interval": 5,
-    "format": "󰍛",
-    "tooltip-format": "CPU {usage}%",
-    "on-click": "foot -e btop"
-  },
   "custom/display": {
     "format": "󰍹",
     "tooltip": false,

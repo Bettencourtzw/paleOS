@@ -1,0 +1,5 @@
+# Added on top of Arch's official "releng" ISO package list
+gum
+git
+jq
+terminus-font
