@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Top-bar clock. Prints the time, or the date + time after a click ("bar-clock toggle").
+# (Waybar's own clock can't print "Nov 3" without a leading zero, so the bar uses this.)
+state="${XDG_RUNTIME_DIR:-/tmp}/bar-clock-long"
+if [ "${1:-}" = toggle ]; then
+  [ -e "$state" ] && rm -f "$state" || touch "$state"
+  pkill -RTMIN+8 waybar; exit 0
+fi
+if [ -e "$state" ]; then
+  # date dimmed and a little smaller, a faint dot, then the time as usual
+  date "+<span foreground='#8a8a8a' size='92%'>%A, %B %-d</span>  <span foreground='#3a3a3a'>•</span>  %H:%M"
+else
+  date '+%H:%M'
+fi

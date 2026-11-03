@@ -38,7 +38,7 @@ window#waybar { background: transparent; color: @fg; }
 #workspaces button.urgent { color: @red; }
 
 /* Center: media + clock */
-#clock { color: @fg; padding: 0 10px; }
+#custom-clock { color: @fg; padding: 0 14px; }
 
 /* Right: system */
 #pulseaudio, #tray, #bluetooth, #network {
