@@ -1,16 +1,20 @@
+# paleOS — only the OS layer. Add your own apps on top.
+
 # Desktop
-hyprland hyprlock hypridle hyprpaper hyprpicker hyprsunset hyprpolkitagent xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
-waybar rofi rofi-calc rofi-emoji quickshell mako swayosd foot kitty nautilus
-grim slurp satty wl-clipboard playerctl brightnessctl libnotify jq
-# Sound / network / bluetooth
-pipewire wireplumber pavucontrol wiremix networkmanager impala bluez bluez-utils bluetui
-# Fonts / look
-ttf-jetbrains-mono-nerd adwaita-fonts noto-fonts noto-fonts-emoji otf-font-awesome
-# Editor (LazyVim)
-neovim git base-devel unzip nodejs npm fd ripgrep fzf lazygit tree-sitter-cli
-# Gaming (AMD)
-steam gamemode lib32-gamemode gamescope mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon lact power-profiles-daemon
-# Boot / login
-plymouth sddm
-# Sandboxed apps
-flatpak
+hyprland hyprlock hypridle hyprpaper hyprpicker hyprsunset xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
+waybar quickshell rofi rofi-calc rofi-emoji mako swayosd foot nautilus
+
+# Tools used by the menu, screenshots and panels
+grim slurp satty wl-clipboard playerctl brightnessctl libnotify jq python neovim fzf btop xdg-utils
+
+# Sound, network, bluetooth
+pipewire wireplumber pipewire-pulse networkmanager bluez bluez-utils
+
+# Fonts
+ttf-jetbrains-mono-nerd adwaita-fonts noto-fonts noto-fonts-emoji
+
+# Login screen + boot splash
+sddm plymouth
+
+# Gaming-ready defaults (AMD tuning is optional in the installer)
+gamemode power-profiles-daemon

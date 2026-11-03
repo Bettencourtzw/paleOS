@@ -1,6 +1,6 @@
 [SddmGreeterTheme]
 Name=Arch Dark
-Description=Animated Arch logo with spreading rings and a minimal password field
+Description=Animated Arch logo over a night sky, minimal password field
 Type=sddm-theme
 Version=1.0
 MainScript=Main.qml
