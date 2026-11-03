@@ -52,13 +52,48 @@ Rectangle {
         return -1
     }
 
+
+    // ---- animated background: soft rings spreading out from behind the logo ----
+    Repeater {
+        model: 5
+        delegate: Rectangle {
+            required property int index
+            property real p: 0
+            z: 0
+            anchors.centerIn: logo
+            width: 120 + p * Math.max(root.width, root.height) * 1.1
+            height: width; radius: width / 2
+            color: "transparent"
+            border.width: 1
+            border.color: Qt.rgba(1, 1, 1, 0.10 * (1 - p))
+            SequentialAnimation on p {
+                loops: Animation.Infinite
+                PauseAnimation { duration: index * 2400 }
+                NumberAnimation { from: 0; to: 1; duration: 12000; easing.type: Easing.OutQuad }
+            }
+        }
+    }
+    Rectangle {   // faint glow behind the logo
+        z: 1
+        anchors.centerIn: logo
+        width: logo.width * 1.3; height: width; radius: width / 2
+        color: "#ffffff"
+        SequentialAnimation on opacity {
+            loops: Animation.Infinite
+            NumberAnimation { from: 0.015; to: 0.045; duration: 3000; easing.type: Easing.InOutSine }
+            NumberAnimation { from: 0.045; to: 0.015; duration: 3000; easing.type: Easing.InOutSine }
+        }
+    }
+
     Item {
         id: logo
-        readonly property real cw: 11
-        readonly property real ch: 20
+        readonly property real cw: 16
+        readonly property real ch: 30
         width: root.artW * cw; height: root.artH * ch
         anchors.horizontalCenter: parent.horizontalCenter
-        y: parent.height * 0.5 - height - 60
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -50
+        z: 2
         Repeater {
             model: root.cells
             delegate: Text {
@@ -68,28 +103,14 @@ Rectangle {
                 x: modelData[1] * logo.cw; y: modelData[0] * logo.ch
                 text: d > 0.06 ? modelData[2] : "+/:-.`o"[(index + Math.floor(root.t * 20)) % 7]
                 visible: d > 0
-                color: d > 0.12 ? "#e6e6e6" : d > 0.05 ? "#8a8a8a" : "#444444"
-                font.family: root.font; font.pixelSize: 17
+                readonly property real wave: Math.sin((modelData[1] + modelData[0] * 1.8) / 7 - root.t * 2.6)
+                color: d > 0.12 ? (wave > 0.93 ? "#ffffff" : wave > 0.6 ? "#d8d8d8" : "#a8a8a8") : d > 0.05 ? "#707070" : "#3a3a3a"
+                font.family: root.font; font.pixelSize: 25
             }
         }
     }
 
-    // ---- clock + password beneath ---------------------------------------
-    Column {
-        anchors.horizontalCenter: parent.horizontalCenter
-        y: parent.height * 0.5 + 10
-        spacing: 18
-
-        Text {
-            id: clock
-            anchors.horizontalCenter: parent.horizontalCenter
-            color: "#e6e6e6"; font.family: root.font; font.pixelSize: 64; font.weight: Font.ExtraLight
-            text: Qt.formatTime(new Date(), "HH:mm")
-            Timer { interval: 1000; running: true; repeat: true; onTriggered: clock.text = Qt.formatTime(new Date(), "HH:mm") }
-        }
-
-    }
-
+    // ---- password field (bottom) ----
     Rectangle {
         id: pill
         anchors.horizontalCenter: parent.horizontalCenter
@@ -172,7 +193,7 @@ Rectangle {
         width: 40; height: 40; radius: 20
         color: pb.containsMouse || root.powerOpen ? "#1f1f1f" : "transparent"
         border.width: 1; border.color: root.powerOpen ? "#3a3a3a" : "#262626"
-        Text { anchors.centerIn: parent; text: String.fromCodePoint(0xF0425); color: pb.containsMouse || root.powerOpen ? "#e6e6e6" : "#7a7a7a"; font.family: root.font; font.pixelSize: 17 }
+        Text { anchors.centerIn: parent; text: String.fromCodePoint(0xF0425); color: pb.containsMouse || root.powerOpen ? "#e6e6e6" : "#7a7a7a"; font.family: root.font; font.pixelSize: 25 }
         MouseArea { id: pb; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.powerOpen = !root.powerOpen }
     }
 }
