@@ -327,17 +327,6 @@ hl.window_rule({
     float = true,
 })
 
--- Bar popups (audio / wifi / bluetooth): float under the top-right of the bar
-hl.window_rule({
-    name  = "bar-popups",
-    match = { class = "^popup\\..*$" },
-
-    float = true,
-    pin   = true,
-    size  = "640 420",
-    move  = "monitor_w-652 50",
-    border_color = "rgba(333333ff)",
-})
 
 ---------------------
 ---- GAMING ----

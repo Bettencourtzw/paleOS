@@ -39,6 +39,13 @@ EFFECTS = [eff_dissolve, eff_wipe_down, eff_wipe_side, eff_center, eff_type, eff
 
 BUILD, HOLD, FADE, REST = 3.0, 4.0, 3.0, 1.0
 
+# glyph styles: map the logo's shading (0 light .. 3 dense); None = original letters
+STYLES = [None, "░▒▓█", "··•●", "0101", "⠂⠒⠖⠿", "-+##"]
+def density(c): return 0 if c in ".`-" else 1 if c in ":/" else 2 if c == "+" else 3
+def glyph(style, i, x, c):
+    if style is None: return c
+    return style[(i + x) % 2 * 3] if style == "0101" else style[density(c)]
+
 def main(scr):
     curses.curs_set(0); scr.nodelay(True)
     curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
@@ -49,6 +56,7 @@ def main(scr):
     try:
         while True:
             appear = random.choice(EFFECTS); vanish = random.choice(EFFECTS)
+            style = None if random.random() < 0.35 else random.choice(STYLES[1:])
             order_in = [appear(y, x, i) for i, (y, x, _) in enumerate(CELLS)]
             order_out = [vanish(y, x, i) for i, (y, x, _) in enumerate(CELLS)]
             t0 = time.time()
@@ -63,7 +71,7 @@ def main(scr):
                     else:                    d = -1
                     if d <= 0: continue
                     pair = 1 if d > 0.12 else 2 if d > 0.05 else 3
-                    ch = c if d > 0.06 else random.choice(NOISE)
+                    ch = glyph(style, i, x, c) if d > 0.06 else random.choice(NOISE)
                     if 0 <= oy + y < h and 0 <= ox + x < w - 1:
                         scr.addstr(oy + y, ox + x, ch, curses.color_pair(pair))
                 scr.refresh()

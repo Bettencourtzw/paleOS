@@ -1,11 +1,9 @@
 // SDDM login: animated Arch logo (random clean effect each cycle) + password beneath.
 import QtQuick 2.15
-import QtQuick.Controls 2.15
 
 Rectangle {
     id: root
     width: 1920; height: 1080
-    color: "#0e0e0e"
     readonly property string font: config.font || "monospace"
     readonly property var cells: [[0, 18, "-"], [0, 19, "`"], [1, 17, "."], [1, 18, "o"], [1, 19, "+"], [1, 20, "`"], [2, 16, "`"], [2, 17, "o"], [2, 18, "o"], [2, 19, "o"], [2, 20, "/"], [3, 15, "`"], [3, 16, "+"], [3, 17, "o"], [3, 18, "o"], [3, 19, "o"], [3, 20, "o"], [3, 21, ":"], [4, 14, "`"], [4, 15, "+"], [4, 16, "o"], [4, 17, "o"], [4, 18, "o"], [4, 19, "o"], [4, 20, "o"], [4, 21, "o"], [4, 22, ":"], [5, 14, "-"], [5, 15, "+"], [5, 16, "o"], [5, 17, "o"], [5, 18, "o"], [5, 19, "o"], [5, 20, "o"], [5, 21, "o"], [5, 22, "+"], [5, 23, ":"], [6, 12, "`"], [6, 13, "/"], [6, 14, ":"], [6, 15, "-"], [6, 16, ":"], [6, 17, "+"], [6, 18, "+"], [6, 19, "o"], [6, 20, "o"], [6, 21, "o"], [6, 22, "o"], [6, 23, "+"], [6, 24, ":"], [7, 11, "`"], [7, 12, "/"], [7, 13, "+"], [7, 14, "+"], [7, 15, "+"], [7, 16, "+"], [7, 17, "/"], [7, 18, "+"], [7, 19, "+"], [7, 20, "+"], [7, 21, "+"], [7, 22, "+"], [7, 23, "+"], [7, 24, "+"], [7, 25, ":"], [8, 10, "`"], [8, 11, "/"], [8, 12, "+"], [8, 13, "+"], [8, 14, "+"], [8, 15, "+"], [8, 16, "+"], [8, 17, "+"], [8, 18, "+"], [8, 19, "+"], [8, 20, "+"], [8, 21, "+"], [8, 22, "+"], [8, 23, "+"], [8, 24, "+"], [8, 25, "+"], [8, 26, ":"], [9, 9, "`"], [9, 10, "/"], [9, 11, "+"], [9, 12, "+"], [9, 13, "+"], [9, 14, "o"], [9, 15, "o"], [9, 16, "o"], [9, 17, "o"], [9, 18, "o"], [9, 19, "o"], [9, 20, "o"], [9, 21, "o"], [9, 22, "o"], [9, 23, "o"], [9, 24, "o"], [9, 25, "o"], [9, 26, "o"], [9, 27, "/"], [9, 28, "`"], [10, 8, "."], [10, 9, "/"], [10, 10, "o"], [10, 11, "o"], [10, 12, "o"], [10, 13, "s"], [10, 14, "s"], [10, 15, "s"], [10, 16, "s"], [10, 17, "o"], [10, 18, "+"], [10, 19, "+"], [10, 20, "o"], [10, 21, "s"], [10, 22, "s"], [10, 23, "s"], [10, 24, "s"], [10, 25, "s"], [10, 26, "s"], [10, 27, "o"], [10, 28, "+"], [10, 29, "`"], [11, 7, "."], [11, 8, "o"], [11, 9, "o"], [11, 10, "s"], [11, 11, "s"], [11, 12, "s"], [11, 13, "s"], [11, 14, "s"], [11, 15, "o"], [11, 16, "-"], [11, 17, "`"], [11, 18, "`"], [11, 19, "`"], [11, 20, "`"], [11, 21, "/"], [11, 22, "o"], [11, 23, "s"], [11, 24, "s"], [11, 25, "s"], [11, 26, "s"], [11, 27, "s"], [11, 28, "s"], [11, 29, "+"], [11, 30, "`"], [12, 6, "-"], [12, 7, "o"], [12, 8, "s"], [12, 9, "s"], [12, 10, "s"], [12, 11, "s"], [12, 12, "s"], [12, 13, "s"], [12, 14, "o"], [12, 15, "."], [12, 22, ":"], [12, 23, "s"], [12, 24, "s"], [12, 25, "s"], [12, 26, "s"], [12, 27, "s"], [12, 28, "s"], [12, 29, "s"], [12, 30, "o"], [12, 31, "."], [13, 5, ":"], [13, 6, "o"], [13, 7, "s"], [13, 8, "s"], [13, 9, "s"], [13, 10, "s"], [13, 11, "s"], [13, 12, "s"], [13, 13, "s"], [13, 14, "/"], [13, 23, "o"], [13, 24, "s"], [13, 25, "s"], [13, 26, "s"], [13, 27, "s"], [13, 28, "o"], [13, 29, "+"], [13, 30, "+"], [13, 31, "+"], [13, 32, "."], [14, 4, "/"], [14, 5, "o"], [14, 6, "s"], [14, 7, "s"], [14, 8, "s"], [14, 9, "s"], [14, 10, "s"], [14, 11, "s"], [14, 12, "s"], [14, 13, "s"], [14, 14, "/"], [14, 23, "+"], [14, 24, "s"], [14, 25, "s"], [14, 26, "s"], [14, 27, "s"], [14, 28, "o"], [14, 29, "o"], [14, 30, "o"], [14, 31, "/"], [14, 32, "-"], [15, 2, "`"], [15, 3, "/"], [15, 4, "o"], [15, 5, "s"], [15, 6, "s"], [15, 7, "s"], [15, 8, "s"], [15, 9, "s"], [15, 10, "o"], [15, 11, "+"], [15, 12, "/"], [15, 13, ":"], [15, 14, "-"], [15, 23, "-"], [15, 24, ":"], [15, 25, "/"], [15, 26, "+"], [15, 27, "o"], [15, 28, "s"], [15, 29, "s"], [15, 30, "s"], [15, 31, "s"], [15, 32, "o"], [15, 33, "+"], [15, 34, "-"], [16, 1, "`"], [16, 2, "+"], [16, 3, "s"], [16, 4, "s"], [16, 5, "o"], [16, 6, "+"], [16, 7, ":"], [16, 8, "-"], [16, 9, "`"], [16, 27, "`"], [16, 28, "."], [16, 29, "-"], [16, 30, "/"], [16, 31, "+"], [16, 32, "o"], [16, 33, "s"], [16, 34, "o"], [16, 35, ":"], [17, 0, "`"], [17, 1, "+"], [17, 2, "+"], [17, 3, ":"], [17, 4, "."], [17, 32, "`"], [17, 33, "-"], [17, 34, "/"], [17, 35, "+"], [17, 36, "/"], [18, 0, "."], [18, 1, "`"], [18, 35, "`"]]
     readonly property int artH: 19
@@ -33,7 +31,31 @@ Rectangle {
         default: return ((x * 37 % 11) / 11) * 0.6 + y / artH * 0.4        // rain
         }
     }
+    // character styles: each maps the logo's shading (0 light .. 3 dense) to glyphs
+    readonly property var styles: [
+        null,                              // original letters
+        ["░", "▒", "▓", "█"],
+        ["·", "•", "•", "●"],
+        ["0", "1", "0", "1"],
+        ["⠂", "⠒", "⠖", "⠿"],
+        ["-", "+", "#", "#"]
+    ]
+    property int style: 0
+    property int light: 0                  // 0 diagonal sweep, 1 center pulse, 2 scanline
+    function density(c) { return ".`-".indexOf(c) >= 0 ? 0 : ":/".indexOf(c) >= 0 ? 1 : c === "+" ? 2 : 3 }
+    function glyph(i) {
+        const c = cells[i]; const st = styles[style]
+        if (!st) return c[2]
+        return style === 3 ? st[(i + c[1]) % 2] : st[density(c[2])]
+    }
+    function shine(y, x) {
+        if (light === 1) return Math.sin(Math.hypot(x - artW / 2, (y - artH / 2) * 2) / 3 - t * 3)
+        if (light === 2) return 1 - Math.min(1, Math.abs(y - ((t * 4) % (artH + 6) - 3)) / 1.5) * 2
+        return Math.sin((x + y * 1.8) / 7 - t * 2.6)
+    }
     function newCycle() {
+        style = Math.random() < 0.35 ? 0 : 1 + Math.floor(Math.random() * (styles.length - 1))
+        light = Math.floor(Math.random() * 3)
         const a = Math.floor(Math.random() * 6), b = Math.floor(Math.random() * 6)
         orderIn = cells.map((c, i) => effect(a, c[0], c[1], i))
         orderOut = cells.map((c, i) => effect(b, c[0], c[1], i))
@@ -53,35 +75,110 @@ Rectangle {
     }
 
 
-    // ---- animated background: soft rings spreading out from behind the logo ----
-    Repeater {
-        model: 5
+    // ---- animated background: night sky — drifting clouds + faint stars ----
+    gradient: Gradient {
+        GradientStop { position: 0.0; color: "#06070a" }
+        GradientStop { position: 1.0; color: "#020203" }
+    }
+    Repeater {   // stars
+        model: 110
         delegate: Rectangle {
             required property int index
-            property real p: 0
-            z: 0
-            anchors.centerIn: logo
-            width: 120 + p * Math.max(root.width, root.height) * 1.1
-            height: width; radius: width / 2
-            color: "transparent"
-            border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.10 * (1 - p))
-            SequentialAnimation on p {
+            readonly property real r: Math.random()
+            readonly property real q: Math.random()
+            x: q * root.width; y: r * root.height * 0.75
+            width: r > 0.9 ? 2 : 1; height: width; radius: width
+            color: "#ffffff"
+            SequentialAnimation on opacity {
                 loops: Animation.Infinite
-                PauseAnimation { duration: index * 2400 }
-                NumberAnimation { from: 0; to: 1; duration: 12000; easing.type: Easing.OutQuad }
+                NumberAnimation { from: 0.05; to: 0.35 + 0.3 * q; duration: 2500 + r * 4000; easing.type: Easing.InOutSine }
+                NumberAnimation { to: 0.05; duration: 2500 + q * 4000; easing.type: Easing.InOutSine }
             }
         }
     }
-    Rectangle {   // faint glow behind the logo
-        z: 1
-        anchors.centerIn: logo
-        width: logo.width * 1.3; height: width; radius: width / 2
-        color: "#ffffff"
+    component CloudLayer: Item {
+        id: layer
+        property int seed: 1
+        property real alpha: 0.05
+        property int seconds: 240
+        property real bandTop: 0.0       // vertical band (fraction of screen)
+        property real band: 1.0
+        width: root.width * 2; height: root.height
+        Canvas {
+            anchors.fill: parent
+            onPaint: {
+                const g = getContext("2d"); let s = layer.seed
+                const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647 }
+                const W = root.width
+                for (let i = 0; i < 90; i++) {
+                    const x = rnd() * W, y = (layer.bandTop + rnd() * layer.band) * height
+                    const rad = 80 + rnd() * 260
+                    for (const dx of [0, W]) {      // drawn twice so the loop is seamless
+                        const gr = g.createRadialGradient(x + dx, y, 0, x + dx, y, rad)
+                        gr.addColorStop(0, Qt.rgba(0.75, 0.80, 0.92, layer.alpha))
+                        gr.addColorStop(1, Qt.rgba(0.75, 0.80, 0.92, 0))
+                        g.fillStyle = gr
+                        g.beginPath(); g.ellipse(x + dx - rad * 1.6, y - rad * 0.6, rad * 3.2, rad * 1.2); g.fill()
+                    }
+                }
+            }
+        }
+        NumberAnimation on x { from: 0; to: -root.width; duration: layer.seconds * 1000; loops: Animation.Infinite }
+    }
+    CloudLayer { seed: 1 + Math.floor(Math.random() * 1e6); alpha: 0.010; seconds: 480; bandTop: 0.0;  band: 0.5 }   // far, slowest
+    CloudLayer { seed: 1 + Math.floor(Math.random() * 1e6); alpha: 0.015; seconds: 300; bandTop: 0.3;  band: 0.5 }   // middle
+    CloudLayer { seed: 1 + Math.floor(Math.random() * 1e6); alpha: 0.020; seconds: 170; bandTop: 0.6;  band: 0.45 }  // near, fastest
+
+    // fog along the bottom, slowly breathing
+    Rectangle {
+        anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
+        height: parent.height * 0.35
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "transparent" }
+            GradientStop { position: 1.0; color: "#0a0b0f" }
+        }
         SequentialAnimation on opacity {
             loops: Animation.Infinite
-            NumberAnimation { from: 0.015; to: 0.045; duration: 3000; easing.type: Easing.InOutSine }
-            NumberAnimation { from: 0.045; to: 0.015; duration: 3000; easing.type: Easing.InOutSine }
+            NumberAnimation { from: 0.5; to: 0.9; duration: 7000; easing.type: Easing.InOutSine }
+            NumberAnimation { from: 0.9; to: 0.5; duration: 7000; easing.type: Easing.InOutSine }
+        }
+    }
+
+    // shooting stars at random moments, random angle and place
+    Item {
+        id: meteor
+        property real ang: 0
+        width: 140; height: 1.5
+        opacity: 0
+        rotation: ang
+        Rectangle {
+            anchors.fill: parent; radius: 1
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0.0; color: "transparent" }
+                GradientStop { position: 1.0; color: "#ddffffff" }
+            }
+        }
+        ParallelAnimation {
+            id: fly
+            NumberAnimation { id: fx; target: meteor; property: "x"; duration: 900; easing.type: Easing.InQuad }
+            NumberAnimation { id: fy; target: meteor; property: "y"; duration: 900; easing.type: Easing.InQuad }
+            SequentialAnimation {
+                NumberAnimation { target: meteor; property: "opacity"; from: 0; to: 0.8; duration: 200 }
+                NumberAnimation { target: meteor; property: "opacity"; to: 0; duration: 700 }
+            }
+        }
+        Timer {
+            interval: 6000; running: true; repeat: true
+            onTriggered: {
+                interval = 5000 + Math.random() * 11000
+                meteor.ang = 20 + Math.random() * 25
+                const sx = Math.random() * root.width * 0.8, sy = Math.random() * root.height * 0.4
+                const dist = 300 + Math.random() * 350, a = meteor.ang * Math.PI / 180
+                fx.from = sx; fx.to = sx + Math.cos(a) * dist
+                fy.from = sy; fy.to = sy + Math.sin(a) * dist
+                fly.restart()
+            }
         }
     }
 
@@ -101,9 +198,9 @@ Rectangle {
                 required property int index
                 readonly property real d: root.vis(index)
                 x: modelData[1] * logo.cw; y: modelData[0] * logo.ch
-                text: d > 0.06 ? modelData[2] : "+/:-.`o"[(index + Math.floor(root.t * 20)) % 7]
+                text: d > 0.06 ? root.glyph(index) : "+/:-.`o"[(index + Math.floor(root.t * 20)) % 7]
                 visible: d > 0
-                readonly property real wave: Math.sin((modelData[1] + modelData[0] * 1.8) / 7 - root.t * 2.6)
+                readonly property real wave: root.shine(modelData[0], modelData[1])
                 color: d > 0.12 ? (wave > 0.93 ? "#ffffff" : wave > 0.6 ? "#d8d8d8" : "#a8a8a8") : d > 0.05 ? "#707070" : "#3a3a3a"
                 font.family: root.font; font.pixelSize: 25
             }
@@ -116,7 +213,7 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom; anchors.bottomMargin: 120
         width: 320; height: 46; radius: 23
-        color: "#cc0e0e0e"
+        color: "#330e0e0e"
         border.width: 1; border.color: root.failed ? "#e06c6c" : "#33ffffff"
         property real shake: 0
         transform: Translate { x: pill.shake }

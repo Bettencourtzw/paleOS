@@ -11,7 +11,7 @@ function o.bind(keys, description, dispatcher, options)
 end
 
 local terminal = "foot"
-local browser  = "chromium"
+local browser  = "sh -c 'gtk-launch \"$(xdg-settings get default-web-browser)\"'"
 local files    = "nautilus --new-window"
 local tui      = function(cmd) return "foot --app-id=tui." .. cmd .. " -e " .. cmd end
 
@@ -19,14 +19,13 @@ local tui      = function(cmd) return "foot --app-id=tui." .. cmd .. " -e " .. c
 o.bind("SUPER + RETURN", "Terminal", terminal)
 o.bind("SUPER + SHIFT + RETURN", "Browser", browser)
 o.bind("SUPER + SHIFT + B", "Browser", browser)
-o.bind("SUPER + SHIFT + ALT + B", "Browser (private)", browser .. " --incognito")
 o.bind("SUPER + SHIFT + F", "File manager", files)
 o.bind("SUPER + SHIFT + N", "Editor", "foot -e nvim")
 o.bind("SUPER + SPACE", "Menu", "~/.local/bin/launcher")
 o.bind("SUPER + K", "Show key bindings", "~/.local/bin/keybinds-menu")
 o.bind("SUPER + ESCAPE", "System menu", "~/.local/bin/launcher system")
 o.bind("SUPER + ALT + SPACE", "Setup menu", "~/.local/bin/launcher setup")
-o.bind("XF86PowerOff", "Power menu", "~/.local/bin/power-menu", { locked = true })
+o.bind("XF86PowerOff", "Power menu", "~/.local/bin/launcher system", { locked = true })
 o.bind("XF86Calculator", "Calculator", "gnome-calculator")
 
 o.bind("SUPER + CTRL + A", "Audio controls", "qs ipc call panel toggle sound")
