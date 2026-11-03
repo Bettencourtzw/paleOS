@@ -180,6 +180,17 @@ if has "AUR helper"; then
 fi
 
 # ---------- 6. paleOS desktop -----------------------------------------------------
+# The newest paleOS from GitHub (a git checkout, so "Update → paleOS" works later);
+# the copy inside the ISO is only used when the download fails.
+latest=/tmp/paleos-latest; rm -rf "$latest"
+if git clone -q --depth 1 https://github.com/Bettencourtzw/paleOS.git "$latest" >>"$LOG" 2>&1; then
+  # reuse the ISO's prebuilt app indexer if its source hasn't changed (saves compiling Rust)
+  diff -rq --exclude=target "$PALEOS_SRC/tools/pale-apps" "$latest/tools/pale-apps" >/dev/null 2>&1 \
+    && [[ -x $PALEOS_SRC/bin/pale-apps ]] && cp "$PALEOS_SRC/bin/pale-apps" "$latest/bin/"
+  PALEOS_SRC=$latest; echo "Using the latest paleOS from GitHub" >>"$LOG"
+else
+  echo "GitHub not reachable; installing the paleOS copy from the ISO" >>"$LOG"
+fi
   run "Copying paleOS" "cp -a $PALEOS_SRC $MNT/home/$username/.local-paleos && arch-chroot $MNT bash -c 'install -d -o $username -g $username /home/$username/.local/share && mv /home/$username/.local-paleos /home/$username/.local/share/paleOS && chown -R $username:$username /home/$username/.local/share/paleOS'"
   run "Installing the paleOS desktop" "arch-chroot $MNT env PALEOS_YES=1 PALEOS_USER=$username bash /home/$username/.local/share/paleOS/install/system.sh"
   run "Setting up your desktop" "arch-chroot $MNT runuser -u $username -- env HOME=/home/$username PALEOS_KEYMAP=$keymap bash /home/$username/.local/share/paleOS/install/user.sh"

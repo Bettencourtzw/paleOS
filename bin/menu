@@ -71,9 +71,10 @@ remove-webapp)
   done ;;
 
 update)
-  [ -z "$pick" ] && { row update "System"; row restart "Restart top bar"; row restart "Restart panels"; exit; }
+  [ -z "$pick" ] && { row update "System"; row update "paleOS"; row restart "Restart top bar"; row restart "Restart panels"; exit; }
   case "$pick" in
     "System") term "sudo pacman -Syu" ;;
+    "paleOS") term "~/.local/bin/paleos-update" ;;
     "Restart top bar") run "systemctl --user restart waybar" ;;
     "Restart panels") run "systemctl --user restart paleos-shell" ;;
   esac ;;

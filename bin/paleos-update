@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Update the paleOS desktop to the newest version on GitHub (Menu → Update → paleOS).
+# Arch packages are updated separately (Update → System). Your settings, monitors, wallpaper and
+# keyboard layout are kept; replaced config folders go to ~/.config/paleos-backup-<date>.
+set -euo pipefail
+REPO_URL=https://github.com/Bettencourtzw/paleOS.git
+dir=${PALEOS_DIR:-$HOME/.local/share/paleOS}
+
+if [[ -d $dir/.git ]]; then
+  old=$(git -C "$dir" rev-parse HEAD)
+  git -C "$dir" fetch -q --depth 50 origin main
+  new=$(git -C "$dir" rev-parse FETCH_HEAD)
+  [[ $old == "$new" ]] && { echo "paleOS is up to date."; exit 0; }
+  echo "What's new:"; git -C "$dir" log --format='  • %s' "$old..$new" 2>/dev/null | head -20 || true
+  changed=$(git -C "$dir" diff --name-only "$old" "$new" 2>/dev/null || echo all)
+else
+  # installed from the ISO without internet, or by hand: switch to a git checkout
+  echo "Getting paleOS from GitHub…"
+  tmp=$(mktemp -d); git clone -q --depth 1 "$REPO_URL" "$tmp/paleOS"
+  [[ -d $dir ]] && mv "$dir" "$dir.old-$(date +%Y%m%d-%H%M%S)"
+  mkdir -p "$(dirname "$dir")"; mv "$tmp/paleOS" "$dir"; rmdir "$tmp"
+  changed=all; new=
+fi
+read -rp "Update now? [Y/n] " a; [[ ${a:-y} =~ ^[Yy] ]] || exit 0
+[[ -n $new ]] && git -C "$dir" reset -q --hard "$new"
+
+# system part (packages, login screen, security settings) only when those files changed
+if [[ $changed == all ]] || grep -qE '^(packages\.txt|install/system\.sh|system/|themes/|tools/)' <<<"$changed"; then
+  echo "System files changed — your password is needed."
+  grep -q '^tools/' <<<"$changed" && rm -f "$dir/bin/pale-apps"   # rebuild the app indexer from new source
+  sudo env PALEOS_YES=1 PALEOS_USER="$USER" bash "$dir/install/system.sh"
+fi
+
+# user part, keeping the keyboard layout you use now
+km=$(sed -n 's/^ *kb_layout = "\([^"]*\)".*/\1/p' ~/.config/hypr/hyprland.lua 2>/dev/null | head -1)
+PALEOS_KEYMAP=${km:-us} bash "$dir/install/user.sh"
+
+# reload the desktop
+hyprctl reload >/dev/null 2>&1 || true
+makoctl reload >/dev/null 2>&1 || true
+systemctl --user daemon-reload
+systemctl --user restart waybar paleos-shell 2>/dev/null || true
+notify-send -u low "paleOS updated" 2>/dev/null || true
+echo "paleOS updated."

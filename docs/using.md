@@ -26,6 +26,10 @@ Sound, network, Bluetooth and display live in the top bar; `SUPER + K` lists eve
 
 **Remove** uninstalls packages or web apps you added.
 
+**Update → System** updates Arch packages. **Update → paleOS** gets the newest paleOS desktop from
+GitHub and shows what's new first. Your settings, monitors, wallpaper and keyboard layout are kept;
+replaced config folders are saved in `~/.config/paleos-backup-<date>`.
+
 Installing Steam enables multilib and offers a full system upgrade, as required when refreshing
 Arch package databases. Review pacman's changes before confirming.
 
