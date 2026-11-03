@@ -8,6 +8,7 @@
   display set mode  WxH@R   e.g. 1920x1080@240
   display set scale S       e.g. 1.25
   display set hdr on|off    HDR always on (10-bit) or always off
+  display set sdr NITS      brightness of normal (SDR) content while HDR is on, 80-400
 
 Settings are saved per monitor in ~/.config/hypr/monitors.lua, one line per output.
 """
@@ -88,6 +89,7 @@ def main(a):
     if a[:1] == ["info"]:
         i = {k: m[k] for k in ("name", "width", "height", "refreshRate", "scale")}
         i["hdr"] = m.get("colorManagementPreset", "") in ("hdr", "hdredid")
+        i["sdr"] = round(m.get("sdrMaxLuminance", 80))
         print(json.dumps(i))
     elif a[:1] == ["rates"]:  print("\n".join(map(str, rates(m))))
     elif a[:1] == ["modes"]:  print(json.dumps(modes(m)))
@@ -95,7 +97,12 @@ def main(a):
     elif a[:2] == ["set", "mode"] and len(a) == 3:  save(m, {"mode": a[2]})
     elif a[:2] == ["set", "scale"] and len(a) == 3: save(m, {"scale": float(a[2])})
     elif a[:2] == ["set", "hdr"] and a[2:] in (["on"], ["off"]):
-        save(m, {"cm": "hdr", "bitdepth": 10} if a[2] == "on" else {"cm": "srgb", "bitdepth": 8})
+        # HDR the way it should look: the monitor's own colours (EDID), normal content at ~250 nits
+        # with deep blacks and gamma 2.2 (Hyprland's defaults, 80 nits + sRGB curve, look dim and grey)
+        save(m, {"cm": "hdredid", "bitdepth": 10, "sdr_eotf": "gamma22", "sdr_min_luminance": 0.005,
+                 "sdr_max_luminance": 250} if a[2] == "on" else {"cm": "srgb", "bitdepth": 8})
+    elif a[:2] == ["set", "sdr"] and len(a) == 3:
+        save(m, {"sdr_max_luminance": max(80, min(400, int(float(a[2]))))})
     else: print(__doc__); sys.exit(2)
 
 main(sys.argv[1:])

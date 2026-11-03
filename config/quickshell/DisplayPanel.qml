@@ -67,6 +67,17 @@ Panel {
         checked: p.mon ? p.mon.hdr : false
         onToggled: { apply.command = [p.tool, "set", "hdr", p.mon && p.mon.hdr ? "off" : "on"]; apply.running = true }
     }
+    // brightness of normal (non-HDR) content while HDR is on, applied when you let go
+    property int sdrPending: 250
+    onMonChanged: if (mon && mon.sdr) sdrPending = mon.sdr
+    Timer { id: applySdr; interval: 450
+        onTriggered: if (p.mon && p.sdrPending !== p.mon.sdr) { apply.command = [p.tool, "set", "sdr", String(p.sdrPending)]; apply.running = true } }
+    Heading { visible: p.mon && p.mon.hdr; text: "SDR BRIGHTNESS"; value: p.sdrPending + " nits" }
+    Level {
+        visible: p.mon && p.mon.hdr
+        value: (p.sdrPending - 80) / 320
+        onMoved: v => { p.sdrPending = Math.round((80 + v * 320) / 10) * 10; applySdr.restart() }
+    }
 
     Heading { text: "NIGHT LIGHT" }
     Switcher {
