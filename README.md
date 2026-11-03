@@ -2,44 +2,61 @@
 
 # paleOS
 
-**Arch Linux, made calm.**
+**Arch Linux, without the setup.**
+
+![paleOS desktop](docs/images/desktop.png)
+
+</div>
+
+Arch is fast, current and yours, but a fresh install is a blank screen and a weekend of
+configuring. paleOS does that weekend for you, then gets out of the way.
+
+You get a calm, black-and-white desktop where everything has one obvious place:
+
+- **One key for everything.** `SUPER + SPACE` opens the menu: your apps, settings, installing
+  software, power. Start typing to find any app.
+- **One click for the basics.** Sound, Wi-Fi, Bluetooth and display each have an icon in the
+  top bar. Click it, change it, click away.
+- **No config files to learn.** Background, window style, power and idle settings are in
+  Customize and Power settings, and every change applies the moment you click. The text files
+  are still there if you want them.
+- **Install apps without knowing package names.** Browsers, editors, dev tools, games and web apps
+  come as short lists. Pick one and it's installed.
+- **Keys that make sense.** Close, fullscreen, move windows and switch workspaces with a few
+  keys you'll remember. `SUPER + K` lists them all.
+- **Safe by default.** Encrypted DNS with no leaks, a firewall, and nothing that phones home.
+- **Ready for games and code.** Games run fullscreen with low latency, and editors and dev
+  servers get the limits they need.
+
+Underneath it's plain Arch with Hyprland: same packages, same wiki, nothing hidden. paleOS adds
+the desktop, not the apps. You choose those.
+
+<div align="center">
 
 ![paleOS login screen](docs/images/login.png)
 
 </div>
 
-paleOS is Arch Linux with a quiet, black-and-white desktop on top. You get Arch as it is —
-rolling, fast, nothing hidden — plus the things you'd otherwise spend a weekend setting up:
-a login screen, a top bar, click-to-open panels, an app menu, sensible keybindings, a lock
-screen and a screensaver. It's inspired by [Omarchy](https://github.com/basecamp/omarchy),
-but it ships only the OS layer. The apps are up to you.
+## Install
 
-Install it from the **paleOS ISO** (a guided installer: pick your kernel, disk,
-encryption and extras) or put it on an **existing Arch install** with one command.
+Boot the **paleOS ISO** and answer a few questions: disk, keyboard, account. Or add paleOS to an
+Arch install you already have:
 
-![Top bar](docs/images/bar.png)
+```bash
+curl -fsSL https://raw.githubusercontent.com/Bettencourtzw/paleOS/main/boot.sh | bash
+```
 
-<table><tr>
-  <td><img src="docs/images/menu.png" alt="Menu" width="260"></td>
-  <td><img src="docs/images/panel-sound.png" alt="Sound" width="300"><br><img src="docs/images/panel-display.png" alt="Display" width="300"></td>
-  <td><img src="docs/images/panel-network.png" alt="Network" width="300"><br><img src="docs/images/panel-bluetooth.png" alt="Bluetooth" width="300"></td>
-</tr></table>
+It never forces a system update, and it backs up anything it replaces.
 
-**Customize** — pick a wallpaper or one of six animated backgrounds (four built around the Arch
-logo — one written in 0s and 1s — three of them on deep black), or add your own images and videos. Tune frame rate, speed and
-brightness, and choose when animations pause — by default whenever a game or any app is fullscreen.
-
-<img src="docs/images/customize.png" alt="Customize" width="420">
-
-## Documentation
+## Learn more
 
 | | |
 |---|---|
-| [Install](docs/install.md) | From the ISO, or on top of an Arch install you already have |
-| [Using paleOS](docs/using.md) | Menu, panels, keybindings, screenshots, gaming |
-| [Make it yours](docs/customize.md) | The Customize app, colors, bar, menu entries, keys, monitors |
-| [Privacy & security](docs/security.md) | Encrypted DNS with no leaks, firewall, hardening |
-| [How it's built](docs/architecture.md) | What lives where, and how the pieces fit |
+| [Install](docs/install.md) | From the ISO, or on top of Arch |
+| [Using paleOS](docs/using.md) | The menu, panels, keys, customizing, power, gaming |
+| [Make it yours](docs/customize.md) | Every setting and the file behind it |
+| [Privacy & security](docs/security.md) | Encrypted DNS, firewall, hardening |
+| [How it's built](docs/architecture.md) | What lives where |
 | [Building the ISO](docs/iso.md) | Make your own installer image |
 
-MIT licensed.
+Inspired by [Omarchy](https://github.com/basecamp/omarchy). MIT licensed.
