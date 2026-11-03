@@ -100,7 +100,6 @@ hl.window_rule({                                 -- games: tearing (lowest laten
     idle_inhibit = "fullscreen",
 })
 
-hl.window_rule({ name = "screensaver", match = { class = "^screensaver$" }, fullscreen = true, no_anim = true })
 
 -- Alt-Tab out of a fullscreen game: the other window takes over fullscreen;
 -- switching back gives the game its fullscreen again (default would drop it).

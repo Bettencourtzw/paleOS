@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-# Fullscreen screensaver (started by hypridle; games block idle via the "games" window rule).
-pgrep -f 'app-id=screensaver' >/dev/null && exit 0
-exec foot --app-id=screensaver -o pad=0x0 -o colors-dark.background=000000 -o cursor.blink=no python3 -I ~/.local/lib/menu/screensaver.py
+# Screensaver (started by hypridle or from the menu). It's a screen overlay in the paleOS shell
+# (config/quickshell/Screensaver.qml), so it never changes any window's fullscreen state.
+exec qs ipc call screensaver start
