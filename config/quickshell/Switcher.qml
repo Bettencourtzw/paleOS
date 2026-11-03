@@ -7,7 +7,7 @@ Item {
     signal toggled()
     width: parent ? parent.width : 0
     height: 26
-    Text { anchors.verticalCenter: parent.verticalCenter; text: t.text; color: Theme.fg; font.family: Theme.font; font.pixelSize: 13 }
+    Text { anchors.verticalCenter: parent.verticalCenter; width: parent.width - 52; elide: Text.ElideRight; text: t.text; color: Theme.fg; font.family: Theme.font; font.pixelSize: 13 }
     Rectangle {
         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
         width: 40; height: 22; radius: 11

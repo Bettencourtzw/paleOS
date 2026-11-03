@@ -28,14 +28,21 @@ A home list: **Apps · Learn · Trigger · Customize · Display · Setup · Inst
 
 ## Customize
 
-**SUPER + SPACE → Customize** opens the settings app: a wallpaper or an animated background
-(Arch particles, Arch constellation, Arch pulse, Night sky, Aurora, Waves, Snow, Fireflies — point at a
-card to preview it), your own images or videos (**Add your own images or videos…**; videos become
-animated backgrounds), top bar position, window gaps and corners, animations, screensaver and lock timing.
-Everything applies as you click.
+**SUPER + SPACE → Customize** opens the settings app — a normal window, with tabs:
 
-Animated backgrounds run at a capped 30 fps and freeze completely when an app is fullscreen on that
-workspace (games included). Pick "Only on an empty desktop" to also freeze them while windows are open.
+| Tab | What you can change |
+|---|---|
+| Background | A wallpaper, one of eight animated backgrounds (Arch pulse, Arch particles, Arch constellation, Night sky, Aurora, Waves, Snow, Fireflies — point at a card to preview it), or your own images and videos (**Add your own images or videos…**; videos become animated backgrounds) |
+| Animation | Frame rate (15–60 fps), speed, detail, brightness, and when to pause: while an app is fullscreen, and/or while windows are open |
+| Windows | Border around the active window, gaps, rounded corners, blur, animations |
+| Top bar | Top or bottom, show/hide, colors |
+
+Paused backgrounds use no CPU or GPU. Everything applies as you click.
+
+## Power settings
+
+**SUPER + SPACE → System → Power settings** (or `SUPER + ESC`): power mode (performance / balanced /
+saver), screensaver, lock and sleep timers, and Lock / Sleep / Restart / Shut down.
 
 ## The top bar
 
@@ -80,5 +87,5 @@ network, sound, display. Each icon opens a small panel; click outside it or pres
 
 ## Idle
 
-After 5 minutes the screensaver starts (an animated Arch logo); after 10 the screen locks.
-Toggle idle locking with `SUPER + CTRL + I`.
+By default the screensaver starts after 5 minutes (an animated Arch logo) and the screen locks after 10.
+Change the timings in Power settings, or toggle idle locking with `SUPER + CTRL + I`.

@@ -1,64 +1,115 @@
 import QtQuick
-import "arch.js" as Arch
 
-// Arch constellation: the logo as stars joined by faint lines, slowly breathing and drifting,
-// over a twinkling sky, with a light sweep passing through. One 30 fps clock.
+// Arch constellation — the Arch logo traced in stars and joined by faint lines, hanging in a
+// night sky with drifting clouds. Stars twinkle; a slow light sweep passes through.
 Rectangle {
     id: root
     property bool running: true
+    property int fps: 30
+    property real speed: 1
+    property real detail: 1
     property real t: 20
-    gradient: Gradient { GradientStop { position: 0; color: "#05060a" } GradientStop { position: 1; color: "#020203" } }
-    Timer { interval: 33; repeat: true; running: root.running; onTriggered: root.t += 0.033 }
+    Timer { interval: Math.round(1000 / Math.max(5, root.fps)); repeat: true; running: root.running; onTriggered: root.t += root.speed * interval / 1000 }
+    gradient: Gradient { GradientStop { position: 0; color: "#070912" } GradientStop { position: 0.7; color: "#030407" } GradientStop { position: 1; color: "#010102" } }
+    // Samples the real Arch logo glyph into points (x, y in 0..1, edge = on the outline).
+    component LogoSampler: Canvas {
+        property var points: []
+        property int step: 5
+        width: 260; height: 260; opacity: 0
+        onAvailableChanged: if (available) requestPaint()
+        onPaint: {
+            const g = getContext("2d"); g.reset()
+            g.fillStyle = "white"; g.textAlign = "center"; g.textBaseline = "middle"
+            g.font = "230px \"JetBrainsMono Nerd Font\""
+            g.fillText(String.fromCodePoint(0xF08C7), 130, 130)
+            const d = g.getImageData(0, 0, 260, 260).data, s = step
+            const on = (x, y) => x >= 0 && y >= 0 && x < 260 && y < 260 && d[(y * 260 + x) * 4 + 3] > 120
+            const raw = []; let x0 = 260, x1 = 0, y0 = 260, y1 = 0
+            for (let y = 0; y < 260; y += s) for (let x = 0; x < 260; x += s) if (on(x, y)) {
+                const edge = !on(x + s, y) || !on(x - s, y) || !on(x, y + s) || !on(x, y - s)
+                raw.push([x, y, edge]); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y)
+            }
+            const w = Math.max(1, x1 - x0), h = Math.max(1, y1 - y0)
+            points = raw.map(p => ({ x: (p[0] - x0) / w, y: (p[1] - y0) / h, edge: p[2] }))
+            aspect = w / h
+        }
+        property real aspect: 1
+    }
+    LogoSampler { id: logo; step: 6 }
+    // the constellation = outline points, thinned out
+    readonly property var stars: logo.points.filter(p => p.edge)
+    readonly property real logoH: height * 0.6
+    readonly property real logoW: logoH * logo.aspect
 
-    // sparse subset of the logo = the constellation's stars
-    readonly property var stars: Arch.points().filter((p, i) => i % 4 === 0)
-    readonly property real logoH: height * 0.56
-    readonly property real logoW: logoH * Arch.aspect
-
-    Repeater {   // background sky
-        model: 120
+    component Clouds: Item {
+        id: cl
+        property real alpha: 0.02
+        property real px: 20
+        property real bandTop: 0
+        property real band: 0.5
+        width: root.width * 2; height: root.height
+        x: -((root.t * px) % root.width)
+        Canvas {
+            anchors.fill: parent; renderStrategy: Canvas.Cooperative
+            onWidthChanged: requestPaint(); onHeightChanged: requestPaint()
+            onPaint: {
+                const g = getContext("2d"), W = root.width; g.reset(); if (W <= 0) return
+                for (let i = 0; i < 60; i++) {
+                    const x = Math.random() * W, y = (cl.bandTop + Math.random() * cl.band) * height, r = W * (0.05 + Math.random() * 0.12)
+                    for (const dx of [0, W]) {
+                        const gr = g.createRadialGradient(x + dx, y, 0, x + dx, y, r)
+                        gr.addColorStop(0, Qt.rgba(0.7, 0.76, 0.9, cl.alpha)); gr.addColorStop(1, Qt.rgba(0.7, 0.76, 0.9, 0))
+                        g.fillStyle = gr; g.beginPath(); g.ellipse(x + dx - r * 1.6, y - r * 0.5, r * 3.2, r); g.fill()
+                    }
+                }
+            }
+        }
+    }
+    Repeater {   // far stars
+        model: Math.round(140 * root.detail)
         delegate: Rectangle {
             readonly property real a: Math.random()
             readonly property real b: Math.random()
             x: a * root.width; y: b * root.height
-            width: a > 0.93 ? 2 : 1; height: width; radius: width; color: "#ffffff"
-            opacity: 0.06 + 0.25 * (0.5 + 0.5 * Math.sin(root.t * (0.5 + b) + a * 6.28))
+            width: a > 0.94 ? 1.6 : 1; height: width; radius: width; color: "white"
+            opacity: 0.05 + 0.22 * (0.5 + 0.5 * Math.sin(root.t * (0.5 + b) + a * 6.28))
         }
     }
+    Clouds { alpha: 0.016; px: 6; bandTop: 0.0; band: 0.45 }
+    Clouds { alpha: 0.022; px: 12; bandTop: 0.55; band: 0.45 }
 
     Item {
         id: shape
         width: root.logoW; height: root.logoH
-        x: (root.width - width) / 2 + Math.sin(root.t * 0.05) * 30
-        y: (root.height - height) / 2 + Math.cos(root.t * 0.04) * 20
-        rotation: Math.sin(root.t * 0.03) * 2.5
-
-        Canvas {   // faint lines between neighbouring stars (drawn once)
-            anchors.fill: parent
-            renderStrategy: Canvas.Cooperative
-            opacity: 0.5 + 0.5 * Math.sin(root.t * 0.25)
+        x: (root.width - width) / 2 + Math.sin(root.t * 0.04) * 24
+        y: (root.height - height) / 2 + Math.cos(root.t * 0.03) * 14
+        Canvas {   // lines between nearby stars, drawn once
+            anchors.fill: parent; renderStrategy: Canvas.Cooperative
+            opacity: 0.55 + 0.45 * Math.sin(root.t * 0.2)
             onWidthChanged: requestPaint(); onHeightChanged: requestPaint()
+            readonly property int count: root.stars.length   // repaint once the logo has been sampled
+            onCountChanged: requestPaint()
             onPaint: {
-                const g = getContext("2d"); g.reset(); if (width <= 0) return
-                const s = root.stars, lim = 0.09
-                g.strokeStyle = Qt.rgba(1, 1, 1, 0.07); g.lineWidth = 1
-                for (let i = 0; i < s.length; i++) for (let j = i + 1; j < s.length; j++) {
-                    const dx = (s[i].x - s[j].x) * Arch.aspect, dy = s[i].y - s[j].y
-                    if (dx * dx + dy * dy < lim * lim) { g.beginPath(); g.moveTo(s[i].x * width, s[i].y * height); g.lineTo(s[j].x * width, s[j].y * height); g.stroke() }
+                const g = getContext("2d"); g.reset(); const s = root.stars; if (width <= 0 || !s.length) return
+                g.strokeStyle = Qt.rgba(1, 1, 1, 0.22); g.lineWidth = 1
+                for (let i = 0; i < s.length; i++) {       // each star links to its two nearest neighbours
+                    const near = s.map((q, j) => [j, Math.hypot((q.x - s[i].x) * root.logoW, (q.y - s[i].y) * root.logoH)])
+                                  .filter(e => e[0] !== i).sort((a, b) => a[1] - b[1]).slice(0, 2)
+                    for (const [j, dist] of near) if (dist < root.logoH * 0.09) {
+                        g.beginPath(); g.moveTo(s[i].x * width, s[i].y * height); g.lineTo(s[j].x * width, s[j].y * height); g.stroke()
+                    }
                 }
             }
         }
         Repeater {
             model: root.stars.length
-            delegate: Rectangle {
+            delegate: Item {
                 required property int index
-                readonly property var p: root.stars[index]
-                // a light sweep moves diagonally through the logo every ~12 s
-                readonly property real sweep: Math.max(0, 1 - Math.abs((p.x + p.y) - ((root.t * 0.18) % 3 - 0.5)) * 4)
-                width: 2.5 + p.d * 2 + sweep * 2; height: width; radius: width
-                x: p.x * shape.width - width / 2; y: p.y * shape.height - height / 2
-                color: "#ffffff"
-                opacity: 0.35 + 0.35 * (0.5 + 0.5 * Math.sin(root.t * (0.7 + p.d) + index)) + sweep * 0.3
+                readonly property var p: root.stars[index] || { x: 0, y: 0 }
+                readonly property real sweep: Math.max(0, 1 - Math.abs((p.x + p.y) - ((root.t * 0.16) % 3.2 - 0.6)) * 3)
+                x: p.x * shape.width; y: p.y * shape.height
+                Rectangle { x: -width / 2; y: -height / 2; width: 2.8 + sweep * 2.4; height: width; radius: width; color: "white"
+                            opacity: 0.6 + 0.3 * Math.sin(root.t * (0.8 + (index % 5) * 0.2) + index) + sweep * 0.25 }
             }
         }
     }

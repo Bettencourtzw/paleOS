@@ -32,6 +32,7 @@ section() {
   case "$s" in
     apps) apps; return ;;
     customize) qs ipc call customize open >/dev/null 2>&1; exit 0 ;;
+    display)   qs ipc call panel toggle display >/dev/null 2>&1; exit 0 ;;
     emoji) exec rofi -show emoji ;;
     calc)  exec rofi -show calc ;;
   esac

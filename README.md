@@ -25,11 +25,11 @@ encryption and extras) or put it on an **existing Arch install** with one comman
   <td><img src="docs/images/panel-network.png" alt="Network" width="300"><br><img src="docs/images/panel-bluetooth.png" alt="Bluetooth" width="300"></td>
 </tr></table>
 
-**Customize** — pick a wallpaper or one of eight animated backgrounds (three of them built around an
-animated Arch logo), or add your own images and videos. Animations pause on their own while a game
-or any app is fullscreen.
+**Customize** — pick a wallpaper or one of eight animated backgrounds (three built around the Arch
+logo, two of them on deep black), or add your own images and videos. Tune frame rate, speed, detail
+and brightness, and choose when animations pause — by default whenever a game or any app is fullscreen.
 
-<img src="docs/images/customize.png" alt="Customize" width="560">
+<img src="docs/images/customize.png" alt="Customize" width="420">
 
 ## Documentation
 
