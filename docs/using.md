@@ -2,7 +2,8 @@
 
 ## The menu — `SUPER + SPACE`
 
-A home list: **Apps · Learn · Trigger · Customize · Display · Setup · Install · Remove · Update · About · System**.
+A home list: **Apps · Learn · Customize · Install · Remove · Update · System**.
+Sound, network, Bluetooth and display live in the top bar; `SUPER + K` lists every key.
 
 - **Right / Enter** opens a section, **Left** goes back, **Esc** closes.
 - Start typing to search your apps straight away.

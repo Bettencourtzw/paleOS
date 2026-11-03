@@ -4,7 +4,7 @@
 
 **Arch Linux, without the setup.**
 
-![paleOS desktop](docs/images/desktop.png)
+![paleOS login screen](docs/images/login.png)
 
 </div>
 
@@ -33,7 +33,7 @@ the desktop, not the apps. You choose those.
 
 <div align="center">
 
-![paleOS login screen](docs/images/login.png)
+![paleOS desktop](docs/images/desktop.png)
 
 </div>
 
