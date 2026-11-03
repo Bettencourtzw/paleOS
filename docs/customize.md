@@ -18,6 +18,7 @@ For everything else, it's a plain text file in your home folder. Most changes ap
 | Monitors | `~/.config/hypr/monitors.lua` (also: Display panel or Display menu) |
 | Window rules, gaps, animations | `~/.config/hypr/hyprland.lua` |
 | Wallpaper | Customize (desktop and lock screen follow `~/.config/hypr/wallpaper`) |
+| Animated backgrounds | Customize. Your own videos go in `~/Wallpapers/live/` (or use **Add your own images or videos…**). Built-ins are files in `~/.config/quickshell/backgrounds/` — write your own (an Item with `property bool running`, see `Night.qml`), then set `"background"` in `~/.config/paleos/settings.json` to its name (`MyThing.qml` → `"my-thing"`) |
 | Lock screen | `~/.config/hypr/hyprlock.conf` |
 | Idle timings | `~/.config/hypr/hypridle.conf` |
 | Terminal | `~/.config/foot/foot.ini` |
