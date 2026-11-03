@@ -1,6 +1,6 @@
 # Make it yours
 
-Start with **SUPER + SPACE → Customize** — background, animation (fps, speed, detail, brightness, pause rules),
+Start with **SUPER + SPACE → Customize** — background, animation (fps, speed, brightness, pause rules),
 window border, gaps, corners, blur, animations and the top bar, all applied instantly. Idle timing is in
 **System → Power settings**. Your choices are stored in `~/.config/paleos/settings.json`.
 

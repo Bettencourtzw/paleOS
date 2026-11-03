@@ -166,14 +166,13 @@ FloatingWindow {
                 Hint { text: "Frame rate" }
                 Choice { options: [15, 24, 30, 45, 60].map(f => ({ label: f + " fps", value: f })); current: win.s.bgFps; onPicked: v => win.set("bgFps", v) }
                 Setting { text: "Speed"; from: 0.25; to: 2; value: win.s.bgSpeed; shown: win.s.bgSpeed.toFixed(2) + "×"; onChanged: v => win.set("bgSpeed", Math.round(v * 20) / 20) }
-                Setting { text: "Detail (stars, flakes, particles)"; from: 0.5; to: 1.5; value: win.s.bgDetail; shown: Math.round(win.s.bgDetail * 100) + "%"; onChanged: v => win.set("bgDetail", Math.round(v * 20) / 20) }
                 Setting { text: "Brightness"; from: 0.4; to: 1.2; value: win.s.bgBrightness; shown: Math.round(win.s.bgBrightness * 100) + "%"; onChanged: v => win.set("bgBrightness", Math.round(v * 20) / 20) }
                 Heading { text: "WHEN TO PAUSE" }
                 Switcher { text: "Pause while an app is fullscreen"; checked: win.s.pauseFullscreen; onToggled: win.set("pauseFullscreen", !win.s.pauseFullscreen) }
                 Switcher { text: "Pause while windows are open"; checked: win.s.pauseWindows || win.s.animate === "visible"
                            onToggled: { const on = win.s.pauseWindows || win.s.animate === "visible"; win.set("animate", ""); win.set("pauseWindows", !on) } }
                 Hint { width: parent.width; wrapMode: Text.WordWrap
-                        text: "Paused backgrounds use no CPU or GPU. Lower frame rate and detail use less while running." }
+                        text: "Paused backgrounds use no CPU or GPU. A lower frame rate uses less while running." }
             }
 
             // Windows --------------------------------------------------------------------------

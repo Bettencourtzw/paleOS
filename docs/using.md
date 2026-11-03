@@ -33,7 +33,7 @@ A home list: **Apps · Learn · Trigger · Customize · Display · Setup · Inst
 | Tab | What you can change |
 |---|---|
 | Background | A wallpaper, one of six animated backgrounds (Arch binary, Arch pulse, Arch particles, Arch constellation, Night sky, Aurora — point at a card to preview it), or your own images and videos (**Add your own images or videos…**; videos become animated backgrounds) |
-| Animation | Frame rate (15–60 fps), speed, detail, brightness, and when to pause: while an app is fullscreen, and/or while windows are open |
+| Animation | Frame rate (15–60 fps), speed, brightness, and when to pause: while an app is fullscreen, and/or while windows are open |
 | Windows | Border around the active window, gaps, rounded corners, blur, animations |
 | Top bar | Top or bottom, show/hide, colors |
 
@@ -67,6 +67,8 @@ network, sound, display. Each icon opens a small panel; click outside it or pres
 | `SUPER + W` | Close window |
 | `SUPER + F` | Fullscreen |
 | `SUPER + T` | Float / tile |
+| `SUPER + J` | Flip a split: stacked ↔ side by side |
+| `SUPER + L` | Switch layout: tiling ↔ master (one big window + a stack) |
 | `SUPER + 1 … 0` | Switch workspace |
 | `SUPER + SHIFT + 1 … 0` | Move window to workspace |
 | `SUPER + arrows` | Move focus |

@@ -35,7 +35,11 @@ o.bind("SUPER + CTRL + T", "Activity", tui("btop"))
 
 ---- WINDOWS ------------------------------------------------------------------
 o.bind("SUPER + W", "Close window", hl.dsp.window.close())
-o.bind("SUPER + J", "Toggle window split", hl.dsp.layout("togglesplit"))
+o.bind("SUPER + J", "Toggle window split (stacked / side by side)", hl.dsp.layout("togglesplit"))
+o.bind("SUPER + L", "Switch layout (tiling / master)", function()
+  local now = hl.get_config("general.layout")
+  hl.config({ general = { layout = now == "master" and "dwindle" or "master" } })
+end)
 o.bind("SUPER + P", "Pseudo window", hl.dsp.window.pseudo())
 o.bind("SUPER + T", "Toggle window floating/tiling", hl.dsp.window.float({ action = "toggle" }))
 o.bind("SUPER + F", "Full screen", hl.dsp.window.fullscreen({ mode = "fullscreen" }))

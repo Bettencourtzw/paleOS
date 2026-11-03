@@ -2,14 +2,13 @@ import QtQuick
 import QtMultimedia
 
 // Shows one background: a built-in animation (backgrounds/<Name>.qml) or your own video ("video:/path").
-// Passes the user's frame rate, speed, detail and brightness to it. `running` false = frozen.
+// Passes the user's frame rate, speed and brightness to it (each background sets its own detail). `running` false = frozen.
 Item {
     id: v
     property string name: ""
     property bool running: false
     property int fps: Settings.data.bgFps
     property real speed: Settings.data.bgSpeed
-    property real detail: Settings.data.bgDetail
     property real brightness: Settings.data.bgBrightness
     readonly property bool isVideo: name.startsWith("video:")
     // "arch-particles" -> backgrounds/ArchParticles.qml
@@ -25,7 +24,6 @@ Item {
             item.running = Qt.binding(() => v.running)
             if ("fps" in item) item.fps = Qt.binding(() => v.fps)
             if ("speed" in item) item.speed = Qt.binding(() => v.speed)
-            if ("detail" in item) item.detail = Qt.binding(() => v.detail)
         }
     }
     Rectangle {   // brightness: below 1 darkens, above 1 lifts slightly

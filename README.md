@@ -26,8 +26,8 @@ encryption and extras) or put it on an **existing Arch install** with one comman
 </tr></table>
 
 **Customize** — pick a wallpaper or one of six animated backgrounds (four built around the Arch
-logo — one written in 0s and 1s — three of them on deep black), or add your own images and videos. Tune frame rate, speed, detail
-and brightness, and choose when animations pause — by default whenever a game or any app is fullscreen.
+logo — one written in 0s and 1s — three of them on deep black), or add your own images and videos. Tune frame rate, speed and
+brightness, and choose when animations pause — by default whenever a game or any app is fullscreen.
 
 <img src="docs/images/customize.png" alt="Customize" width="420">
 
