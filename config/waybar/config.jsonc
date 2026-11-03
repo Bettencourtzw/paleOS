@@ -14,7 +14,7 @@
   "modules-right":  ["group/right"],
 
   "group/left":   { "orientation": "horizontal", "modules": ["custom/arch", "hyprland/workspaces"] },
-  "group/center": { "orientation": "horizontal", "modules": ["clock"] },
+  "group/center": { "orientation": "horizontal", "modules": ["custom/clock"] },
   "group/right":  {
     "orientation": "horizontal",
     "modules": ["group/tray-expander", "bluetooth", "network", "pulseaudio", "custom/display"]
@@ -34,9 +34,13 @@
   },
 
 
-  "clock": {
-    "format": "{:%H:%M}",
-    "tooltip": false
+  "custom/clock": {
+    "exec": "~/.local/bin/bar-clock",
+    "format": "{}",
+    "interval": 5,
+    "signal": 8,
+    "tooltip": false,
+    "on-click": "~/.local/bin/bar-clock toggle"
   },
 
   "pulseaudio": {
