@@ -23,6 +23,7 @@ ShellRoot {
     BluetoothPanel { open: shell.current === "bluetooth"; onCloseRequested: shell.close() }
     NetworkPanel   { open: shell.current === "network";   onCloseRequested: shell.close() }
     DisplayPanel   { open: shell.current === "display";   onCloseRequested: shell.close() }
+    PowerPanel     { open: shell.current === "power";     onCloseRequested: shell.close() }
 
     IpcHandler {
         target: "panel"
@@ -33,5 +34,6 @@ ShellRoot {
         target: "customize"
         function open(): void { customize.open = true }
         function toggle(): void { customize.open = !customize.open }
+        function page(n: int): void { customize.tab = n; customize.open = true }   // 0 background · 1 animation · 2 windows · 3 bar
     }
 }

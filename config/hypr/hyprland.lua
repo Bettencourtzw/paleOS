@@ -110,4 +110,3 @@ hl.config({ misc = { on_focus_under_fullscreen = 1 } })
 -- Gaps, rounding and animations from the Customize app (SUPER+SPACE → Customize).
 pcall(dofile, home .. "/.config/hypr/paleos.lua")
 
-hl.window_rule({ name = "customize", match = { title = "^Customize — paleOS$" }, float = true, center = true, size = "820 860" })

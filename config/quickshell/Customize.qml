@@ -4,13 +4,15 @@ import QtQuick.Dialogs
 import Quickshell
 import Quickshell.Io
 
-// paleOS Customize app (SUPER+SPACE → Customize). Changes save + apply immediately.
+// paleOS Customize app (SUPER+SPACE → Customize). A normal tiled window with tabs.
+// Every change saves to ~/.config/paleos/settings.json and applies right away.
 FloatingWindow {
     id: win
     property bool open: false
+    property int tab: 0
     visible: open
     title: "Customize — paleOS"
-    implicitWidth: 820; implicitHeight: 860
+    implicitWidth: 960; implicitHeight: 760
     color: Theme.bg
     onClosed: open = false
 
@@ -21,15 +23,15 @@ FloatingWindow {
     Process { id: apply; command: [win.home + "/.local/bin/paleos-apply"] }
     Shortcut { sequence: "Escape"; onActivated: win.open = false }
 
-    // ---- what's available: built-in animations, your videos, your images --------------------
+    // ---- backgrounds: built-ins, your videos, your images ----------------------------------
     readonly property var builtins: [
-        { name: "arch-particles",     label: "Arch particles",     about: "Points gather into the logo, then drift apart" },
-        { name: "arch-constellation", label: "Arch constellation", about: "The logo drawn in stars, slowly breathing" },
-        { name: "arch-pulse",         label: "Arch pulse",         about: "The symbol with soft rings and orbits" },
+        { name: "arch-pulse",         label: "Arch pulse",         about: "Deep black · the symbol, orbits, ripples" },
+        { name: "arch-particles",     label: "Arch particles",     about: "Deep black · particles spiral into the logo" },
+        { name: "arch-constellation", label: "Arch constellation", about: "The logo traced in stars, in a cloudy sky" },
         { name: "night",              label: "Night sky",          about: "Drifting clouds, stars, shooting stars" },
-        { name: "aurora",             label: "Aurora",             about: "Soft bands of light, flowing" },
-        { name: "waves",              label: "Waves",              about: "Thin lines like a slow map" },
-        { name: "snow",               label: "Snow",               about: "Flakes falling at three depths" },
+        { name: "aurora",             label: "Aurora",             about: "Curtains of pale light" },
+        { name: "waves",              label: "Waves",              about: "Fine lines like a slow map" },
+        { name: "snow",               label: "Snow",               about: "Flakes at three depths, soft up close" },
         { name: "fireflies",          label: "Fireflies",          about: "Glowing points floating and pulsing" }]
     property var videos: []
     property var images: []
@@ -52,8 +54,7 @@ FloatingWindow {
         run.command = ["bash", "-c", 'ln -sfn "$1" ~/.config/hypr/wallpaper && { pkill -x hyprpaper; setsid -f hyprpaper >/dev/null 2>&1; }', "_", f]
         run.running = true; currentImage = f; set("background", "static")
     }
-
-    FileDialog {   // add your own images (wallpapers) or videos (animated backgrounds)
+    FileDialog {
         id: addFiles
         title: "Add images or videos"
         fileMode: FileDialog.OpenFiles
@@ -65,134 +66,137 @@ FloatingWindow {
         }
     }
 
-    // ---- layout ---------------------------------------------------------------------------
+    // small helpers for this window
+    component Hint: Text { color: Theme.dim; font.family: Theme.font; font.pixelSize: 11 }
+    component Setting: Column {   // labelled slider: value in [from, to]
+        id: sl
+        property string text
+        property real from: 0
+        property real to: 1
+        property real value: 0
+        property string shown: value.toFixed(2)
+        signal changed(real v)
+        width: parent ? parent.width : 0; spacing: 8
+        Item { width: parent.width; height: 14
+            Hint { width: parent.width - value.width - 12; elide: Text.ElideRight; text: sl.text }
+            Hint { id: value; anchors.right: parent.right; text: sl.shown; color: Theme.fg } }
+        Level { width: parent.width; value: (sl.value - sl.from) / (sl.to - sl.from); onMoved: v => sl.changed(sl.from + v * (sl.to - sl.from)) }
+    }
+    component Card: Rectangle {   // an animated background card with live preview
+        id: card
+        property var item
+        readonly property bool on: win.s.background === item.name
+        width: (pane.width - 24) / 3; height: width * 9 / 16 + 46
+        radius: 12; color: Theme.bgAlt; clip: true
+        border.width: on ? 2 : 1; border.color: on ? Theme.fg : (hover.containsMouse ? Theme.dim : Theme.border)
+        scale: hover.containsMouse ? 1.03 : 1
+        Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+        Rectangle {
+            x: 3; y: 3; width: parent.width - 6; height: (parent.width - 6) * 9 / 16; radius: 9; color: "black"; clip: true
+            BackgroundView { anchors.fill: parent; name: win.open ? card.item.name : ""; running: hover.containsMouse }
+        }
+        Rectangle { visible: card.on; x: parent.width - width - 10; y: 10; width: 24; height: 24; radius: 12; color: Theme.fg
+            Text { anchors.centerIn: parent; text: Theme.icon(0xF012C); color: Theme.bg; font.family: Theme.font; font.pixelSize: 15 } }
+        Column { x: 12; anchors.bottom: parent.bottom; anchors.bottomMargin: 8; width: parent.width - 24; spacing: 1
+            Text { width: parent.width; elide: Text.ElideRight; text: card.item.label; color: Theme.fg; font.family: Theme.font; font.pixelSize: 12; font.bold: true }
+            Text { width: parent.width; elide: Text.ElideRight; text: card.item.about; color: Theme.dim; font.family: Theme.font; font.pixelSize: 10 } }
+        MouseArea { id: hover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: win.set("background", card.item.name) }
+    }
+    component Preview: Rectangle {   // live preview of what's selected
+        width: parent ? parent.width : 0; height: width * 9 / 16 * 0.55
+        radius: 12; color: "black"; clip: true; border.color: Theme.border
+        Image { anchors.fill: parent; anchors.margins: 1; visible: win.s.background === "static"
+                source: win.currentImage ? "file://" + win.currentImage : ""; fillMode: Image.PreserveAspectCrop; asynchronous: true; sourceSize.width: 1280 }
+        BackgroundView { anchors.fill: parent; anchors.margins: 1; visible: win.s.background !== "static"
+                         name: win.open && win.s.background !== "static" ? win.s.background : ""; running: win.open }
+    }
+
+    // ---- sidebar ----------------------------------------------------------------------------
+    Rectangle {
+        id: side
+        width: 210; height: parent.height; color: "#0a0a0a"
+        Rectangle { anchors.right: parent.right; width: 1; height: parent.height; color: Theme.border }
+        Column {
+            x: 16; y: 24; width: parent.width - 32; spacing: 4
+            Row { spacing: 12; bottomPadding: 18
+                Text { text: Theme.icon(0xF03D8); color: Theme.fg; font.family: Theme.font; font.pixelSize: 24 }
+                Text { text: "Customize"; color: Theme.fg; font.family: Theme.font; font.pixelSize: 17; font.bold: true; anchors.verticalCenter: parent.verticalCenter } }
+            Repeater {
+                model: [ { g: 0xF02E9, t: "Background" }, { g: 0xF0E7B, t: "Animation" }, { g: 0xF05B2, t: "Windows" }, { g: 0xF06DF, t: "Top bar" } ]
+                delegate: Entry { required property var modelData; required property int index
+                                  glyph: modelData.g; text: modelData.t; active: win.tab === index; onClicked: win.tab = index }
+            }
+        }
+        Text { x: 16; anchors.bottom: parent.bottom; anchors.bottomMargin: 18; width: parent.width - 32; wrapMode: Text.WordWrap
+               text: "Changes apply right away.\nPower & idle: SUPER+SPACE → System."; color: Theme.dim; font.family: Theme.font; font.pixelSize: 10 }
+    }
+
+    // ---- pages ------------------------------------------------------------------------------
     Flickable {
-        anchors.fill: parent; anchors.margins: 28
-        contentHeight: col.implicitHeight; clip: true
+        id: flick
+        anchors { left: side.right; right: parent.right; top: parent.top; bottom: parent.bottom; margins: 28 }
+        contentHeight: pane.implicitHeight; clip: true
         ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
         Column {
-            id: col
-            width: parent.width; spacing: 14
+            id: pane
+            width: flick.width; spacing: 14
 
-            Row {
-                spacing: 14
-                Text { text: Theme.icon(0xF03D8); color: Theme.fg; font.family: Theme.font; font.pixelSize: 30 }
-                Column {
-                    Text { text: "Customize"; color: Theme.fg; font.family: Theme.font; font.pixelSize: 20; font.bold: true }
-                    Text { text: "CHANGES APPLY RIGHT AWAY"; color: Theme.dim; font.family: Theme.font; font.pixelSize: 10; font.letterSpacing: 1 }
-                }
+            // Background ---------------------------------------------------------------------
+            Column { visible: win.tab === 0; width: parent.width; spacing: 14
+                Heading { text: "BACKGROUND"; value: win.s.background === "static" ? "Wallpaper" : (win.animated.find(a => a.name === win.s.background) || { label: "" }).label }
+                Preview {}
+                Hint { text: "ANIMATED  ·  point at one to preview it"; font.letterSpacing: 1; font.pixelSize: 10 }
+                Flow { width: parent.width; spacing: 12
+                    Repeater { model: win.animated; delegate: Card { required property var modelData; item: modelData } } }
+                Hint { text: "WALLPAPERS"; font.letterSpacing: 1; font.pixelSize: 10 }
+                Flow { width: parent.width; spacing: 12
+                    Repeater { model: win.images
+                        delegate: Rectangle { required property string modelData
+                            readonly property bool on: win.s.background === "static" && modelData === win.currentImage
+                            width: (pane.width - 24) / 3; height: width * 9 / 16; radius: 10
+                            color: Theme.bgAlt; border.width: on ? 2 : 1; border.color: on ? Theme.fg : Theme.border
+                            Image { anchors.fill: parent; anchors.margins: 3; source: "file://" + parent.modelData; fillMode: Image.PreserveAspectCrop; sourceSize.width: 320; asynchronous: true }
+                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: win.pickImage(parent.modelData) } } } }
+                Entry { glyph: 0xF0415; text: "Add your own images or videos…"; detail: "videos become animated backgrounds"; onClicked: addFiles.open() }
+                Entry { glyph: 0xF024B; text: "Open the wallpapers folder"; onClicked: Quickshell.execDetached(["nautilus", win.home + "/Wallpapers"]) }
             }
 
-            Heading { text: "BACKGROUND"; value: win.s.background === "static" ? "Wallpaper" : (win.animated.find(a => a.name === win.s.background) || { label: "" }).label }
-
-            Rectangle {   // big live preview of what's selected
-                width: parent.width; height: width * 9 / 16 * 0.62
-                radius: 12; color: "black"; clip: true
-                border.color: Theme.border
-                Image {
-                    anchors.fill: parent; visible: win.s.background === "static"
-                    source: win.currentImage ? "file://" + win.currentImage : ""; fillMode: Image.PreserveAspectCrop; asynchronous: true
-                    sourceSize.width: 1280
-                }
-                BackgroundView {
-                    anchors.fill: parent; anchors.margins: 1; visible: win.s.background !== "static"
-                    name: win.open && win.s.background !== "static" ? win.s.background : ""
-                    running: win.open
-                }
+            // Animation ------------------------------------------------------------------------
+            Column { visible: win.tab === 1; width: parent.width; spacing: 16
+                Heading { text: "ANIMATED BACKGROUND"; value: win.s.background === "static" ? "using a wallpaper" : "" }
+                Preview {}
+                Hint { text: "Frame rate" }
+                Choice { options: [15, 24, 30, 45, 60].map(f => ({ label: f + " fps", value: f })); current: win.s.bgFps; onPicked: v => win.set("bgFps", v) }
+                Setting { text: "Speed"; from: 0.25; to: 2; value: win.s.bgSpeed; shown: win.s.bgSpeed.toFixed(2) + "×"; onChanged: v => win.set("bgSpeed", Math.round(v * 20) / 20) }
+                Setting { text: "Detail (stars, flakes, particles)"; from: 0.5; to: 1.5; value: win.s.bgDetail; shown: Math.round(win.s.bgDetail * 100) + "%"; onChanged: v => win.set("bgDetail", Math.round(v * 20) / 20) }
+                Setting { text: "Brightness"; from: 0.4; to: 1.2; value: win.s.bgBrightness; shown: Math.round(win.s.bgBrightness * 100) + "%"; onChanged: v => win.set("bgBrightness", Math.round(v * 20) / 20) }
+                Heading { text: "WHEN TO PAUSE" }
+                Switcher { text: "Pause while an app is fullscreen"; checked: win.s.pauseFullscreen; onToggled: win.set("pauseFullscreen", !win.s.pauseFullscreen) }
+                Switcher { text: "Pause while windows are open"; checked: win.s.pauseWindows || win.s.animate === "visible"
+                           onToggled: { const on = win.s.pauseWindows || win.s.animate === "visible"; win.set("animate", ""); win.set("pauseWindows", !on) } }
+                Hint { width: parent.width; wrapMode: Text.WordWrap
+                        text: "Paused backgrounds use no CPU or GPU. Lower frame rate and detail use less while running." }
             }
 
-            Text { text: "ANIMATED  ·  point at one to preview it"; color: Theme.dim; font.family: Theme.font; font.pixelSize: 10; font.letterSpacing: 1 }
-            Flow {
-                width: parent.width; spacing: 12
-                Repeater {
-                    model: win.animated
-                    delegate: Rectangle {
-                        id: card
-                        required property var modelData
-                        readonly property bool on: win.s.background === modelData.name
-                        width: (col.width - 24) / 3; height: width * 9 / 16 + 46
-                        radius: 12; color: Theme.bgAlt; clip: true
-                        border.width: on ? 2 : 1; border.color: on ? Theme.fg : (hover.containsMouse ? Theme.dim : Theme.border)
-                        scale: hover.containsMouse ? 1.03 : 1
-                        Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-                        Rectangle {   // the live preview
-                            x: 3; y: 3; width: parent.width - 6; height: (parent.width - 6) * 9 / 16
-                            radius: 9; color: "black"; clip: true
-                            BackgroundView { anchors.fill: parent; name: win.open ? card.modelData.name : ""; running: hover.containsMouse }
-                        }
-                        Rectangle {   // selected badge
-                            visible: card.on
-                            x: parent.width - width - 10; y: 10; width: 24; height: 24; radius: 12; color: Theme.fg
-                            Text { anchors.centerIn: parent; text: Theme.icon(0xF012C); color: Theme.bg; font.family: Theme.font; font.pixelSize: 15 }
-                        }
-                        Column {
-                            x: 12; anchors.bottom: parent.bottom; anchors.bottomMargin: 8; width: parent.width - 24; spacing: 1
-                            Text { width: parent.width; elide: Text.ElideRight; text: card.modelData.label; color: Theme.fg; font.family: Theme.font; font.pixelSize: 12; font.bold: true }
-                            Text { width: parent.width; elide: Text.ElideRight; text: card.modelData.about; color: Theme.dim; font.family: Theme.font; font.pixelSize: 10 }
-                        }
-                        MouseArea { id: hover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: win.set("background", card.modelData.name) }
-                    }
-                }
-            }
-            Choice {
-                visible: win.s.background !== "static"
-                options: [{ label: "Animate unless fullscreen", value: "always" }, { label: "Only on an empty desktop", value: "visible" }]
-                current: win.s.animate
-                onPicked: v => win.set("animate", v)
+            // Windows --------------------------------------------------------------------------
+            Column { visible: win.tab === 2; width: parent.width; spacing: 16
+                Heading { text: "WINDOWS" }
+                Setting { text: "Border around the active window"; from: 0; to: 6; value: win.s.borderSize; shown: win.s.borderSize + " px"; onChanged: v => win.set("borderSize", Math.round(v)) }
+                Setting { text: "Gaps between windows"; from: 0; to: 24; value: win.s.gaps; shown: win.s.gaps + " px"; onChanged: v => win.set("gaps", Math.round(v)) }
+                Setting { text: "Rounded corners"; from: 0; to: 20; value: win.s.rounding; shown: win.s.rounding + " px"; onChanged: v => win.set("rounding", Math.round(v)) }
+                Switcher { text: "Blur behind see-through windows"; checked: win.s.blur; onToggled: win.set("blur", !win.s.blur) }
+                Switcher { text: "Animations"; checked: win.s.animations; onToggled: win.set("animations", !win.s.animations) }
             }
 
-            Text { text: "WALLPAPERS"; color: Theme.dim; font.family: Theme.font; font.pixelSize: 10; font.letterSpacing: 1 }
-            Flow {
-                width: parent.width; spacing: 12
-                Repeater {
-                    model: win.images
-                    delegate: Rectangle {
-                        required property string modelData
-                        readonly property bool on: win.s.background === "static" && modelData === win.currentImage
-                        width: (col.width - 24) / 3; height: width * 9 / 16; radius: 10
-                        color: Theme.bgAlt; border.width: on ? 2 : 1; border.color: on ? Theme.fg : Theme.border
-                        Image { anchors.fill: parent; anchors.margins: 3; source: "file://" + parent.modelData; fillMode: Image.PreserveAspectCrop
-                                sourceSize.width: 320; asynchronous: true }
-                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: win.pickImage(parent.modelData) }
-                    }
-                }
+            // Top bar --------------------------------------------------------------------------
+            Column { visible: win.tab === 3; width: parent.width; spacing: 16
+                Heading { text: "TOP BAR" }
+                Hint { text: "Position" }
+                Choice { options: [{ label: "Top", value: "top" }, { label: "Bottom", value: "bottom" }]; current: win.s.barPosition; onPicked: v => win.set("barPosition", v) }
+                Entry { glyph: 0xF06DF; text: "Show / hide the bar"; detail: "SUPER + SHIFT + SPACE"; onClicked: Quickshell.execDetached(["pkill", "-SIGUSR1", "waybar"]) }
+                Entry { glyph: 0xF03EB; text: "Edit bar colors"; onClicked: Quickshell.execDetached(["foot", "-e", "nvim", win.home + "/.config/waybar/colors.css"]) }
+                Entry { glyph: 0xF03EB; text: "Edit menu colors"; onClicked: Quickshell.execDetached(["foot", "-e", "nvim", win.home + "/.config/rofi/colors.rasi"]) }
             }
-            Entry { glyph: 0xF0415; text: "Add your own images or videos…"; detail: "videos become animated backgrounds"; onClicked: addFiles.open() }
-            Entry { glyph: 0xF024B; text: "Open the wallpapers folder"; onClicked: Quickshell.execDetached(["nautilus", win.home + "/Wallpapers"]) }
-
-            Heading { text: "TOP BAR" }
-            Choice {
-                options: [{ label: "Top", value: "top" }, { label: "Bottom", value: "bottom" }]
-                current: win.s.barPosition
-                onPicked: v => win.set("barPosition", v)
-            }
-
-            Heading { text: "WINDOWS"; value: "gaps " + win.s.gaps + " · corners " + win.s.rounding }
-            Text { text: "Gaps"; color: Theme.dim; font.family: Theme.font; font.pixelSize: 11 }
-            Level { value: win.s.gaps / 24; onMoved: v => win.set("gaps", Math.round(v * 24)) }
-            Text { text: "Rounded corners"; color: Theme.dim; font.family: Theme.font; font.pixelSize: 11 }
-            Level { value: win.s.rounding / 20; onMoved: v => win.set("rounding", Math.round(v * 20)) }
-            Switcher { text: "Animations"; checked: win.s.animations; onToggled: win.set("animations", !win.s.animations) }
-
-            Heading { text: "WHEN IDLE" }
-            Text { text: "Screensaver after"; color: Theme.dim; font.family: Theme.font; font.pixelSize: 11 }
-            Choice {
-                options: [{ label: "Off", value: 0 }, { label: "2 min", value: 2 }, { label: "5 min", value: 5 }, { label: "10 min", value: 10 }, { label: "20 min", value: 20 }]
-                current: win.s.screensaverMinutes
-                onPicked: v => win.set("screensaverMinutes", v)
-            }
-            Text { text: "Lock after"; color: Theme.dim; font.family: Theme.font; font.pixelSize: 11 }
-            Choice {
-                options: [{ label: "Off", value: 0 }, { label: "5 min", value: 5 }, { label: "10 min", value: 10 }, { label: "15 min", value: 15 }, { label: "30 min", value: 30 }]
-                current: win.s.lockMinutes
-                onPicked: v => win.set("lockMinutes", v)
-            }
-
-            Heading { text: "MORE" }
-            Entry { glyph: 0xF0379; text: "Display settings"; detail: "resolution, refresh rate, scale"; onClicked: Quickshell.execDetached(["qs", "ipc", "call", "panel", "toggle", "display"]) }
-            Entry { glyph: 0xF0594; text: "Toggle night light"; onClicked: Quickshell.execDetached([win.home + "/.local/bin/toggle-nightlight"]) }
-            Entry { glyph: 0xF03EB; text: "Edit bar colors"; onClicked: Quickshell.execDetached(["foot", "-e", "nvim", win.home + "/.config/waybar/colors.css"]) }
-            Entry { glyph: 0xF03EB; text: "Edit menu colors"; onClicked: Quickshell.execDetached(["foot", "-e", "nvim", win.home + "/.config/rofi/colors.rasi"]) }
         }
     }
 }

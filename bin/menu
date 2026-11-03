@@ -41,21 +41,12 @@ trigger)
 
 
 
-display)
-  [ -z "$pick" ] && { ~/.local/bin/display rates | while read -r r; do row display "$r Hz"; done
-                      row night "Toggle nightlight"; row edit "Open display settings file"; exit; }
-  case "$pick" in
-    "Toggle nightlight") run ~/.local/bin/toggle-nightlight ;;
-    "Open display settings file") edit ~/.config/hypr/monitors.lua ;;
-    *" Hz") r=${pick% Hz}; res=$(~/.local/bin/display info | jq -r '"\(.width)x\(.height)"')
-            ~/.local/bin/display set mode "$res@$r" && notify-send -u low Display "Refresh rate: $r Hz" ;;
-  esac ;;
 
 setup)
-  [ -z "$pick" ] && { row audio "Sound"; row wifi "Network"; row bluetooth "Bluetooth"
+  [ -z "$pick" ] && { row audio "Sound"; row wifi "Network"; row bluetooth "Bluetooth"; row display "Display"
                       row keys "Keybindings"; row edit "Edit Hyprland config"; row edit "Edit keybindings"; row edit "Edit this menu"; exit; }
   case "$pick" in
-    "Sound") panel sound ;; "Network") panel network ;; "Bluetooth") panel bluetooth ;;
+    "Sound") panel sound ;; "Network") panel network ;; "Bluetooth") panel bluetooth ;; "Display") panel display ;;
     "Keybindings") run ~/.local/bin/keybinds-menu ;;
     "Edit Hyprland config") edit ~/.config/hypr/hyprland.lua ;;
     "Edit keybindings") edit ~/.config/hypr/bindings.lua ;;
@@ -120,11 +111,12 @@ about)
   ;;
 
 system)
-  [ -z "$pick" ] && { row lock "Lock"; row sleep "Suspend"; row logout "Log out"; row reboot "Restart"; row shutdown "Shut down"
+  [ -z "$pick" ] && { row system "Power settings"; row lock "Lock"; row sleep "Suspend"; row logout "Log out"; row reboot "Restart"; row shutdown "Shut down"
                       command -v powerprofilesctl >/dev/null && { cur=$(powerprofilesctl get)
                         for p in performance balanced power-saver; do row about "Power mode: $p$( [ "$p" = "$cur" ] && echo '  ✓')"; done; }
                       exit; }
   case "$pick" in
+    "Power settings") panel power ;;
     "Lock") run "pidof hyprlock || hyprlock" ;; "Suspend") run "systemctl suspend" ;;
     "Log out") run "hyprctl dispatch 'hl.dsp.exit()'" ;;
     "Restart") run "systemctl reboot" ;; "Shut down") run "systemctl poweroff" ;;
