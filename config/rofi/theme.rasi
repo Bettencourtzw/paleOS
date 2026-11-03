@@ -1,0 +1,31 @@
+/* Menu look (narrow Omarchy-style panel). Colors live in colors.rasi */
+@import "colors.rasi"
+
+* { background-color: transparent; text-color: @fg; }
+
+window {
+  width: 400px;
+  location: center;
+  anchor: center;
+  background-color: @bg;
+  border: 1px solid;
+  border-color: @border;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+mainbox   { spacing: 10px; children: [ inputbar, listview ]; }
+inputbar  { padding: 8px 12px 4px; children: [ entry ]; }
+entry     { placeholder-color: @fg-dim; cursor: text; }
+
+listview  { lines: 9; fixed-height: true; scrollbar: false; spacing: 4px; }
+
+element   { padding: 11px 12px; border-radius: 10px; spacing: 14px; }
+element normal.normal, element alternate.normal,
+element normal.active, element alternate.active,
+element normal.urgent, element alternate.urgent { background-color: transparent; text-color: @fg-dim; }
+element selected.normal, element selected.active, element selected.urgent { background-color: @bg-alt; text-color: @fg; }
+element-icon { size: 20px; vertical-align: 0.5; }
+element-text { vertical-align: 0.5; text-color: inherit; }
+
+textbox { padding: 8px 12px; text-color: @fg-dim; }

@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Arch Dark
+Description=Black splash with the Arch wallpaper (boot + shutdown)
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/arch-dark
+ScriptFile=/usr/share/plymouth/themes/arch-dark/arch-dark.script

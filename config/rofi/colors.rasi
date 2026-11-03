@@ -1,0 +1,10 @@
+/* Theme colors — change these to restyle the launcher and menus */
+* {
+  bg:     rgba(14, 14, 14, 100%);
+  bg-alt: #1a1a1a;
+  fg:     #e6e6e6;
+  fg-dim: #9a9a9a;
+  border: #262626;
+  accent: #e6e6e6;
+  on-accent: #0e0e0e;
+}

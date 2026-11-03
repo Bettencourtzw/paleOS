@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Fullscreen screensaver (started by hypridle). Does nothing if one is already running or a game is fullscreen.
+pgrep -f 'app-id=screensaver' >/dev/null && exit 0
+hyprctl activewindow -j | jq -e '.fullscreen != 0 and (.class | test("^(steam_app_|cs2|gamescope)"))' >/dev/null 2>&1 && exit 0
+exec foot --app-id=screensaver --fullscreen -o pad=0x0 -o colors-dark.background=000000 -o cursor.blink=no python3 -I ~/.local/lib/menu/screensaver.py

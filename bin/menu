@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# Sections of the SUPER+SPACE menu (modelled on Omarchy's).
+#   menu <section>          -> list rows
+#   menu <section> <label>  -> run it (print "GOTO:<section>" to open a sub-menu)
+# To add an entry: add a `row icon "Label"` line and a matching case line.
+I=~/.local/share/menu-icons
+row()  { printf '%s\0icon\x1f%s\n' "$2" "$I/$1.svg"; }
+run()  { setsid -f bash -c "$1" >/dev/null 2>&1; }
+term() { run "foot -e bash -c '$1; echo; read -n1 -p \"Done. Press any key to close.\"'"; }
+edit() { run "foot -e nvim $1"; }
+web()  { run "xdg-open '$1'"; }
+panel(){ run "qs ipc call panel toggle $1"; }
+HYPR=~/.config/hypr/hyprland.lua
+MON=~/.config/hypr/monitors.lua
+sec="$1"; pick="$2"
+
+case "$sec" in
+learn)
+  [ -z "$pick" ] && { row keys "Keybindings"; row web "Hyprland"; row web "Arch Wiki"; row web "Neovim (LazyVim)"; row web "Bash"; exit; }
+  case "$pick" in
+    "Keybindings") run ~/.local/bin/keybinds-menu ;;
+    "Hyprland") web "https://wiki.hypr.land/" ;;
+    "Arch Wiki") web "https://wiki.archlinux.org/title/Main_page" ;;
+    "Neovim (LazyVim)") web "https://www.lazyvim.org/keymaps" ;;
+    "Bash") web "https://devhints.io/bash" ;;
+  esac ;;
+
+trigger)
+  [ -z "$pick" ] && { row capture "Screenshot"; row capture "Screenshot (edit)"; row picker "Color picker"
+                      row trigger "Emoji"; row trigger "Calculator"; row bell "Toggle notifications"
+                      row night "Toggle nightlight"; row idle "Toggle idle lock"; row about "Screensaver"; exit; }
+  case "$pick" in
+    "Screenshot") run "sleep 0.3; ~/.local/bin/screenshot" ;;
+    "Screenshot (edit)") run "sleep 0.3; ~/.local/bin/screenshot edit" ;;
+    "Color picker") run "sleep 0.3; hyprpicker -a" ;;
+    "Emoji") echo "GOTO:emoji" ;;
+    "Calculator") echo "GOTO:calc" ;;
+    "Toggle notifications") run "makoctl mode -t do-not-disturb >/dev/null; notify-send -u low Notifications toggled" ;;
+    "Toggle nightlight") run ~/.local/bin/toggle-nightlight ;;
+    "Toggle idle lock") run ~/.local/bin/toggle-idle ;;
+    "Screensaver") run "sleep 0.5; ~/.local/bin/screensaver" ;;
+  esac ;;
+
+style)
+  [ -z "$pick" ] && { row image "Background"; row bar "Toggle top bar"; row edit "Edit top bar"; row edit "Edit menu colors"; exit; }
+  case "$pick" in
+    "Background") echo "GOTO:background" ;;
+    "Toggle top bar") run "pkill -SIGUSR1 waybar" ;;
+    "Edit top bar") edit "~/.config/waybar/config.jsonc ~/.config/waybar/style.css ~/.config/waybar/colors.css" ;;
+    "Edit menu colors") edit ~/.config/rofi/colors.rasi ;;
+  esac ;;
+
+background)
+  [ -z "$pick" ] && { find ~/Wallpapers -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) \
+                        | sort | while read -r f; do printf '%s\0icon\x1f%s\n' "${f#$HOME/Wallpapers/}" "$f"; done; exit; }
+  f="$HOME/Wallpapers/$pick"
+  [ -f "$f" ] && { sed -i "s|^    path = .*|    path = $f|" ~/.config/hypr/hyprpaper.conf
+                   run "pkill -x hyprpaper; sleep 0.2; hyprpaper" ; } ;;
+
+setup)
+  [ -z "$pick" ] && { row audio "Sound"; row wifi "Network"; row bluetooth "Bluetooth"
+                      row keys "Keybindings"; row edit "Edit Hyprland config"; row edit "Edit keybindings"; row edit "Edit this menu"; exit; }
+  case "$pick" in
+    "Sound") panel sound ;; "Network") panel network ;; "Bluetooth") panel bluetooth ;;
+    "Keybindings") run ~/.local/bin/keybinds-menu ;;
+    "Edit Hyprland config") edit "$HYPR" ;;
+    "Edit keybindings") edit ~/.config/hypr/bindings.lua ;;
+    "Edit this menu") edit ~/.local/bin/menu ;;
+  esac ;;
+
+display)
+  [ -z "$pick" ] && {
+    hyprctl monitors -j | jq -r '.[0] | "\(.width)x\(.height)" as $r | .availableModes[] | select(startswith($r))' \
+      | sed -E 's/@([0-9]+)\.[0-9]+Hz/@\1/' | grep -vE '@(59|119|50)$' | sort -t@ -k2 -nr -u \
+      | while read -r m; do row display "${m/@/ @ } Hz"; done
+    row night "Toggle nightlight"; row edit "Open display settings file"; exit; }
+  case "$pick" in
+    "Toggle nightlight") run ~/.local/bin/toggle-nightlight ;;
+    "Open display settings file") edit "$MON" ;;
+    *Hz) mode=$(echo "$pick" | tr -d ' Hz')
+         sed -i -E "0,/mode     = \"[^\"]*\"/s//mode     = \"$mode\"/" "$MON"
+         run "hyprctl reload; notify-send -u low Display 'Refresh rate: ${mode#*@} Hz'" ;;
+  esac ;;
+
+install)
+  [ -z "$pick" ] && { row package "Package"; exit; }
+  case "$pick" in
+    "Package") term "pacman -Slq | fzf --multi --preview \"pacman -Si {}\" --prompt \"Install > \" | xargs -ro sudo pacman -S" ;;
+  esac ;;
+
+remove)
+  [ -z "$pick" ] && { row package "Package"; exit; }
+  case "$pick" in
+    "Package") term "pacman -Qeq | fzf --multi --preview \"pacman -Qi {}\" --prompt \"Remove > \" | xargs -ro sudo pacman -Rns" ;;
+  esac ;;
+
+update)
+  [ -z "$pick" ] && { row update "System"; row update "Neovim plugins"; row restart "Restart top bar"; row restart "Restart panels"; exit; }
+  case "$pick" in
+    "System") term "sudo pacman -Syu" ;;
+    "Neovim plugins") term "nvim --headless \"+Lazy! sync\" +qa" ;;
+    "Restart top bar") run "systemctl --user restart waybar" ;;
+    "Restart panels") run "systemctl --user restart polkit-dialog" ;;
+  esac ;;
+
+about)
+  [ -z "$pick" ] && { row about "$(. /etc/os-release; echo "$PRETTY_NAME") · $(uname -r)"; row about "$(lscpu | sed -n 's/^Model name: *//p')"
+                      row about "$(lspci | sed -n 's/.*VGA[^:]*: //p' | sed 's/Advanced Micro Devices, Inc. \[AMD\/ATI\] //')"
+                      row about "Memory: $(free -h | awk '/Mem:/{print $2}')"; exit; }
+  ;;
+
+system)
+  [ -z "$pick" ] && { row lock "Lock"; row sleep "Suspend"; row logout "Log out"; row reboot "Restart"; row shutdown "Shut down"; exit; }
+  case "$pick" in
+    "Lock") run "pidof hyprlock || hyprlock" ;; "Suspend") run "systemctl suspend" ;;
+    "Log out") run "hyprctl dispatch 'hl.dsp.exit()'" ;;
+    "Restart") run "systemctl reboot" ;; "Shut down") run "systemctl poweroff" ;;
+  esac ;;
+esac

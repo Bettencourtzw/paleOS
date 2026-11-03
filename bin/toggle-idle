@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+if pkill hypridle; then notify-send -u low "Idle lock disabled"
+else setsid -f hypridle >/dev/null 2>&1; notify-send -u low "Idle lock enabled"; fi

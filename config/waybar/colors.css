@@ -1,0 +1,9 @@
+/* Theme colors — change these to restyle the whole bar */
+@define-color bg        #0e0e0e;
+@define-color bg-alt    #1f1f1f;
+@define-color border    #262626;
+@define-color fg        #e6e6e6;
+@define-color dim       #707070;
+@define-color accent    #e6e6e6;
+@define-color on-accent #0e0e0e;
+@define-color red       #e06c6c;

@@ -1,0 +1,103 @@
+// Floating "island" bar. Layout here, looks in style.css, colors in colors.css
+{
+  "layer": "top",
+  "position": "top",
+  "height": 34,
+  "margin-top": 6,
+  "margin-left": 10,
+  "margin-right": 10,
+  "spacing": 0,
+  "reload_style_on_change": true,
+
+  "modules-left":   ["group/left"],
+  "modules-center": ["group/center"],
+  "modules-right":  ["group/right"],
+
+  "group/left":   { "orientation": "horizontal", "modules": ["custom/arch", "hyprland/workspaces"] },
+  "group/center": { "orientation": "horizontal", "modules": ["mpris", "clock"] },
+  "group/right":  {
+    "orientation": "horizontal",
+    "modules": ["group/tray-expander", "bluetooth", "network", "pulseaudio", "custom/display"]
+  },
+
+  "custom/arch": {
+    "format": "󰣇",
+    "tooltip": false,
+    "on-click": "~/.local/bin/launcher"
+  },
+
+  "hyprland/workspaces": {
+    "on-click": "activate",
+    "format": "{name}",
+    "persistent-workspaces": { "*": 4 },
+    "sort-by-number": true
+  },
+
+  "mpris": {
+    "format": "{player_icon}  {artist} — {title}",
+    "format-paused": "{status_icon}  {artist} — {title}",
+    "player-icons": { "default": "󰝚", "spotify": "󰓇", "chromium": "󰊯" },
+    "status-icons": { "paused": "󰏤" },
+    "max-length": 40,
+    "on-click": "playerctl play-pause"
+  },
+
+  "clock": {
+    "format": "{:%H:%M}",
+    "tooltip": false
+  },
+
+  "pulseaudio": {
+    "format": "{icon}",
+    "format-muted": "󰖁",
+    "format-icons": { "headphone": "󰋋", "default": ["󰕿", "󰖀", "󰕾"] },
+    "scroll-step": 5,
+    "tooltip-format": "{desc}: {volume}%",
+    "on-click": "qs ipc call panel toggle sound",
+    "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+  },
+
+
+  "group/tray-expander": {
+    "orientation": "inherit",
+    "drawer": { "transition-duration": 400, "children-class": "tray-group-item" },
+    "modules": ["custom/expand-icon", "tray"]
+  },
+  "custom/expand-icon": { "format": "󰅁", "tooltip": false },
+  "cpu": {
+    "interval": 5,
+    "format": "󰍛",
+    "tooltip-format": "CPU {usage}%",
+    "on-click": "foot -e btop"
+  },
+  "custom/display": {
+    "format": "󰍹",
+    "tooltip": false,
+    "on-click": "qs ipc call panel toggle display"
+  },
+  "tray": { "icon-size": 16, "spacing": 12 },
+
+  "bluetooth": {
+    "format": "󰂯",
+    "format-disabled": "󰂲",
+    "format-off": "󰂲",
+    "format-connected": "󰂱",
+    "tooltip-format": "{controller_alias}: {num_connections} connected",
+    "tooltip-format-connected": "{device_enumerate}",
+    "tooltip-format-enumerate-connected": "{device_alias}",
+    "on-click": "qs ipc call panel toggle bluetooth"
+  },
+
+  "network": {
+    "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
+    "format-wifi": "{icon}",
+    "format-ethernet": "󰈀",
+    "format-disconnected": "󰤮",
+    "tooltip-format-wifi": "{essid} ({signalStrength}%)\n⇣ {bandwidthDownBytes}   ⇡ {bandwidthUpBytes}",
+    "tooltip-format-ethernet": "{ifname}\n⇣ {bandwidthDownBytes}   ⇡ {bandwidthUpBytes}",
+    "interval": 3,
+    "on-click": "qs ipc call panel toggle network"
+  }
+
+
+}
