@@ -22,7 +22,9 @@ pick()  { gum choose --header "$1" "${@:2}"; }
 ask()   { gum input --header "$1" --value "${2:-}" --placeholder "${3:-}"; }
 yes()   { gum confirm --default="${2:-true}" "$1"; }
 die()   { gum style --foreground 1 --margin "1 2" "$1"; echo "Log: $LOG"; exit 1; }
-run()   { local label=$1; shift; gum spin --spinner dot --title "$label" -- bash -c "$* >>$LOG 2>&1" || die "Failed: $label"; }
+# (braces: the command's own redirects, e.g. genfstab > fstab, must win over the log redirect)
+run()   { local label=$1; shift; gum spin --spinner dot --title "$label" -- bash -c "{ $*
+} >>$LOG 2>&1" || die "Failed: $label"; }
 
 # ---------- 0. checks -----------------------------------------------------------
 [[ -d /sys/firmware/efi ]] || die "paleOS needs a computer booted in UEFI mode."
