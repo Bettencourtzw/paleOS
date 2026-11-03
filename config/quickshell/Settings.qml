@@ -20,7 +20,6 @@ Singleton {
             property string background: "static"  // "static", a built-in (e.g. "arch-pulse") or "video:/path"
             property int bgFps: 30                 // frames per second for animated backgrounds
             property real bgSpeed: 1.0             // 0.25 … 2
-            property real bgDetail: 1.0            // 0.5 … 1.5 (how many stars, flakes, particles…)
             property real bgBrightness: 1.0        // 0.4 … 1.2
             property bool pauseFullscreen: true    // freeze while an app is fullscreen
             property bool pauseWindows: false      // freeze while windows are open on that desktop
