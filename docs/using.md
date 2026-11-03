@@ -28,12 +28,14 @@ A home list: **Apps · Learn · Trigger · Customize · Display · Setup · Inst
 
 ## Customize
 
-**SUPER + SPACE → Customize** opens the settings app: wallpaper or the animated night-sky
-background, top bar position, window gaps and corners, animations, screensaver and lock timing.
+**SUPER + SPACE → Customize** opens the settings app: a wallpaper or an animated background
+(Arch particles, Arch constellation, Arch pulse, Night sky, Aurora, Waves, Snow, Fireflies — point at a
+card to preview it), your own images or videos (**Add your own images or videos…**; videos become
+animated backgrounds), top bar position, window gaps and corners, animations, screensaver and lock timing.
 Everything applies as you click.
 
-The animated background only moves while you can see it — it freezes when an app is fullscreen
-(games included) and, by default, whenever windows are open on that desktop.
+Animated backgrounds run at a capped 30 fps and freeze completely when an app is fullscreen on that
+workspace (games included). Pick "Only on an empty desktop" to also freeze them while windows are open.
 
 ## The top bar
 
@@ -45,7 +47,7 @@ network, sound, display. Each icon opens a small panel; click outside it or pres
 | Sound | Volume, mute, output device, microphone |
 | Network | Ethernet/Wi-Fi status, Wi-Fi networks (with password entry), speed test |
 | Bluetooth | On/off, paired devices, scan for new ones |
-| Display | Scale (snaps to sharp values), night light, the display settings file |
+| Display | Resolution and refresh rate (dropdowns with your monitor's supported modes), scale, night light, the settings file |
 
 ## Keys
 

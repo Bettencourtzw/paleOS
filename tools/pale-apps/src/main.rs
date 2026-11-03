@@ -1,7 +1,9 @@
 //! pale-apps — lists installed apps for the paleOS menu.
 //! Usage: pale-apps <ids-file>
 //! Prints one rofi row per app ("Name\0icon\x1f<icon>\x1fmeta\x1f<keywords>") and
-//! writes the matching desktop IDs, in the same order, to <ids-file>.
+//! writes the command to start each app (its Exec line, ready to run), in the same order, to <ids-file>.
+//! Running Exec directly (like rofi's drun) avoids D-Bus activation, which breaks for Flatpak
+//! apps until the session is restarted.
 use std::collections::HashSet;
 use std::env;
 use std::fs;
@@ -15,7 +17,7 @@ const HIDE: &[&str] = &[
     "xgpsspeed", "org.freedesktop.IBus.Setup", "cmake-gui", "electron",
 ];
 
-struct App { name: String, icon: String, id: String, keywords: String }
+struct App { name: String, icon: String, cmd: String, keywords: String }
 
 /// Same places every desktop looks (XDG spec), plus Flatpak's exports.
 fn data_dirs(home: &Path) -> Vec<PathBuf> {
@@ -47,6 +49,7 @@ fn icon_path(name: &str, home: &Path) -> String {
 fn parse(path: &Path, id: &str, home: &Path) -> Option<App> {
     let text = fs::read_to_string(path).ok()?;
     let (mut in_entry, mut name, mut icon, mut kw, mut kind) = (false, None, None, String::new(), "");
+    let (mut exec, mut terminal) = (String::new(), false);
     for line in text.lines() {
         let line = line.trim();
         if line.starts_with('[') { if in_entry { break; } in_entry = line == "[Desktop Entry]"; continue; }
@@ -56,18 +59,31 @@ fn parse(path: &Path, id: &str, home: &Path) -> Option<App> {
             "Name" => name = Some(v.trim().to_string()),
             "Icon" => icon = Some(v.trim().to_string()),
             "Keywords" => kw = v.trim().to_string(),
+            "Exec" => exec = v.trim().to_string(),
+            "Terminal" => terminal = v.trim().eq_ignore_ascii_case("true"),
             "Type" => kind = if v.trim() == "Application" { "app" } else { "other" },
             "NoDisplay" | "Hidden" if v.trim().eq_ignore_ascii_case("true") => return None,
             _ => {}
         }
     }
-    if kind != "app" { return None; }
+    if kind != "app" || exec.is_empty() { return None; }
+    let cmd = clean_exec(&exec);
+    let cmd = if terminal { format!("foot -e {cmd}") } else { cmd };
     Some(App {
         name: name.unwrap_or_else(|| id.to_string()),
         icon: icon_path(icon.as_deref().unwrap_or("application-x-executable"), home),
-        id: id.to_string(),
+        cmd,
         keywords: kw,
     })
+}
+
+/// Drops desktop-entry field codes (%U, %f, …) and Flatpak's @@ file-forwarding markers.
+fn clean_exec(exec: &str) -> String {
+    exec.split_whitespace()
+        .filter(|w| !(w.len() == 2 && w.starts_with('%')) && !w.starts_with("@@"))
+        .collect::<Vec<_>>()
+        .join(" ")
+        .replace("%%", "%")
 }
 
 fn escape(s: &str) -> String { s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;") }
@@ -90,7 +106,7 @@ fn main() -> io::Result<()> {
     apps.sort_by_key(|a| a.name.to_lowercase());
     let (mut out, mut ids) = (BufWriter::new(io::stdout().lock()), BufWriter::new(fs::File::create(&ids_file)?));
     for a in &apps {
-        writeln!(ids, "{}", a.id)?;
+        writeln!(ids, "{}", a.cmd)?;
         write!(out, "{}\0icon\x1f{}\x1fmeta\x1f{}\n", escape(&a.name), a.icon, a.keywords)?;
     }
     Ok(())

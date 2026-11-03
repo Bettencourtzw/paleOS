@@ -16,7 +16,8 @@ nav=(-kb-custom-1 "Left" -kb-move-char-back "Control+b")          # Left exits r
 open=(-kb-accept-entry "Return,KP_Enter,Right" -kb-move-char-forward "Control+f")
 look() { echo "entry {placeholder: \"$1\";}"; }
 chev() { printf '%-22s<span alpha="35%%">›</span>' "$1"; }
-launch() { setsid -f gtk-launch "$(sed -n "$(( $1 + 1 ))p" "$ids")" >/dev/null 2>&1; }
+# run the app's own command (from pale-apps), like rofi's drun — no D-Bus activation needed
+launch() { setsid -f sh -c "$(sed -n "$(( $1 + 1 ))p" "$ids")" >/dev/null 2>&1; }
 
 # returns 1 = go back, otherwise exits the script
 apps() {

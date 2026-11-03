@@ -16,8 +16,8 @@ Singleton {
         onLoadFailed: writeAdapter()          // first run: write the defaults
         JsonAdapter {
             id: adapter
-            property string background: "static"   // "static" (wallpaper image) or "night" (animated)
-            property string animate: "visible"     // "visible": only on an empty desktop · "always": unless fullscreen
+            property string background: "static"   // "static" (wallpaper), a built-in (e.g. "arch-pulse", "night") or "video:/path"
+            property string animate: "always"      // "always": unless an app is fullscreen · "visible": only on an empty desktop
             property string barPosition: "top"
             property int gaps: 12
             property int rounding: 10

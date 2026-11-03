@@ -3,6 +3,7 @@
 
   display info              name, resolution, refresh, scale (JSON)
   display rates             refresh rates for the current resolution, e.g. 260, 240, 60
+  display modes             every supported resolution with its refresh rates (JSON)
   display scales            scales that give a sharp, whole-pixel result on this monitor
   display set mode  WxH@R   e.g. 1920x1080@240
   display set scale S       e.g. 1.25
@@ -21,6 +22,14 @@ def rates(m):
     res = f'{m["width"]}x{m["height"]}@'
     r = {round(float(x[len(res):].rstrip("Hz"))) for x in m["availableModes"] if x.startswith(res)}
     return sorted((x for x in r if x >= 60), reverse=True)
+
+def modes(m):
+    out = {}
+    for x in m["availableModes"]:
+        res, hz = x.split("@")
+        out.setdefault(res, set()).add(round(float(hz.rstrip("Hz"))))
+    order = sorted(out, key=lambda r: [int(v) for v in r.split("x")], reverse=True)
+    return [{"resolution": r, "rates": sorted((h for h in out[r] if h >= 50), reverse=True)} for r in order]
 
 def scales(m):
     ok = [s for s in (1, 1.2, 1.25, 1.5, 1.6, 1.75, 2, 2.5, 3)
@@ -49,6 +58,7 @@ def main(a):
     m = focused()
     if a[:1] == ["info"]:  print(json.dumps({k: m[k] for k in ("name", "width", "height", "refreshRate", "scale")}))
     elif a[:1] == ["rates"]:  print("\n".join(map(str, rates(m))))
+    elif a[:1] == ["modes"]:  print(json.dumps(modes(m)))
     elif a[:1] == ["scales"]: print("\n".join(map(str, scales(m))))
     elif a[:2] == ["set", "mode"] and len(a) == 3:  save(m, "mode", a[2])
     elif a[:2] == ["set", "scale"] and len(a) == 3: save(m, "scale", float(a[2]))

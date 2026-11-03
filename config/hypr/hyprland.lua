@@ -19,6 +19,8 @@ end)
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 hl.env("MESA_SHADER_CACHE_MAX_SIZE", "12G")   -- fewer shader stutters in games
+-- include Flatpak apps everywhere (menus, portals, file "open with")
+hl.env("XDG_DATA_DIRS", home .. "/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share")
 
 ---- LOOK ----
 hl.config({
@@ -108,4 +110,4 @@ hl.config({ misc = { on_focus_under_fullscreen = 1 } })
 -- Gaps, rounding and animations from the Customize app (SUPER+SPACE → Customize).
 pcall(dofile, home .. "/.config/hypr/paleos.lua")
 
-hl.window_rule({ name = "customize", match = { title = "^Customize — paleOS$" }, float = true, center = true, size = "760 720" })
+hl.window_rule({ name = "customize", match = { title = "^Customize — paleOS$" }, float = true, center = true, size = "820 860" })
