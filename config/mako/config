@@ -17,3 +17,6 @@ default-timeout=0
 
 [mode=do-not-disturb]
 invisible=1
+
+[mode=fullscreen]
+invisible=1

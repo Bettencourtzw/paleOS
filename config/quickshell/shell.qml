@@ -19,6 +19,7 @@ ShellRoot {
     Polkit {}
     Background {}
     Screensaver {}
+    FullscreenQuiet {}
     Dock {}
     Customize { id: customize }
     SoundPanel     { open: shell.current === "sound";     onCloseRequested: shell.close() }
