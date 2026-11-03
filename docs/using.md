@@ -20,7 +20,6 @@ Sound, network, Bluetooth and display live in the top bar; `SUPER + K` lists eve
 | Editor | VS Code, Zed, Helix, Neovim + LazyVim |
 | Terminal | Ghostty, Alacritty, Kitty, WezTerm |
 | Development | Rust, Go, Node.js, Python (uv), Java, C/C++, Docker, GitHub CLI |
-| Gaming | Steam, Lutris, Heroic, MangoHud, Prism Launcher, Gamescope |
 | Web App | Any website as its own app, with its icon, in the menu |
 | Service | Tailscale, Syncthing, printing, Flatpak |
 | AUR helper | `yay`, needed for AUR entries |
@@ -80,13 +79,6 @@ network, sound, display. Each icon opens a small panel; click outside it or pres
 | `SUPER + ESC` | System menu (lock, suspend, restart, power mode) |
 | `SUPER + K` | Every keybinding, searchable |
 
-## Gaming
-
-- **FreeSync** in fullscreen, **tearing allowed** for games (lowest latency), fullscreen games bypass the compositor.
-- Games (Steam/Proton, CS2, gamescope, Minecraft) always open **fullscreen over the bar**, and the screen won't sleep while they run.
-- **Alt-Tab** out of a fullscreen game shows the other window full-size; switching back restores the game's fullscreen.
-- **GameMode** is installed: add `gamemoderun %command%` to a Steam game's launch options.
-- Power mode (performance / balanced / power saver) is in **System → Power mode** and in Power settings.
 
 ## Idle
 
