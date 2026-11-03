@@ -26,7 +26,10 @@ Panel {
     Process { id: md; command: [p.tool, "modes"]; stdout: StdioCollector { onStreamFinished: p.modes = JSON.parse(this.text) } }
     Process { id: sc; command: [p.tool, "scales"]; stdout: StdioCollector { onStreamFinished: p.scales = this.text.trim().split("\n").map(Number) } }
     Process { id: nl; command: ["pgrep", "-x", "hyprsunset"]; onExited: code => p.night = code === 0 }
-    Process { id: apply; onExited: settle.restart() }
+    Process { id: apply; onExited: code => {
+        if (code !== 0) Quickshell.execDetached(["notify-send", "Display settings", "Could not update the monitor settings. Check monitors.lua."])
+        settle.restart()
+    } }
     Timer { id: settle; interval: 600; onTriggered: p.refresh() }
     function setMode(resolution, hz) { apply.command = [p.tool, "set", "mode", resolution + "@" + hz]; apply.running = true }
 

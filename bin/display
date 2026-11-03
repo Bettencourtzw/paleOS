@@ -21,7 +21,7 @@ def focused():
 def rates(m):
     res = f'{m["width"]}x{m["height"]}@'
     r = {round(float(x[len(res):].rstrip("Hz"))) for x in m["availableModes"] if x.startswith(res)}
-    return sorted((x for x in r if x >= 60), reverse=True)
+    return sorted(r, reverse=True)
 
 def modes(m):
     out = {}
@@ -29,27 +29,49 @@ def modes(m):
         res, hz = x.split("@")
         out.setdefault(res, set()).add(round(float(hz.rstrip("Hz"))))
     order = sorted(out, key=lambda r: [int(v) for v in r.split("x")], reverse=True)
-    return [{"resolution": r, "rates": sorted((h for h in out[r] if h >= 50), reverse=True)} for r in order]
+    return [{"resolution": r, "rates": sorted(out[r], reverse=True)} for r in order]
 
 def scales(m):
     ok = [s for s in (1, 1.2, 1.25, 1.5, 1.6, 1.75, 2, 2.5, 3)
           if (m["width"] / s).is_integer() and (m["height"] / s).is_integer()]
     return [round(s, 2) for s in ok]
 
+LUA_TOKEN = re.compile(r'''--\[(=*)\[.*?\]\1\]|--[^\n]*|\[(=*)\[.*?\]\2\]|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[A-Za-z_]\w*|[-+]?\d+(?:\.\d+)?|[^\s]''', re.S)
+
+def fields(text):
+    tokens = [t for t in LUA_TOKEN.finditer(text) if not t.group().startswith("--")]
+    return {tokens[i].group(): (tokens[i + 2], tokens[i + 3].group() if i + 3 < len(tokens) else "") for i in range(len(tokens) - 2)
+            if tokens[i + 1].group() == "="}
+
 def save(m, key, value):
     text = open(FILE).read() if os.path.exists(FILE) else ""
-    cur = {"mode": f'{m["width"]}x{m["height"]}@{round(m["refreshRate"])}', "scale": round(m["scale"], 2)}
-    pat = re.compile(r'^hl\.monitor\(\{ output = "' + re.escape(m["name"]) + r'".*$', re.M)
-    old = pat.search(text)
-    if old:   # keep what's already saved for this monitor
-        if (mm := re.search(r'mode = "([^"]+)"', old.group(0))): cur["mode"] = mm.group(1)
-        if (ms := re.search(r'scale = ([0-9.]+)', old.group(0))): cur["scale"] = float(ms.group(1))
-    cur[key] = value
-    line = (f'hl.monitor({{ output = "{m["name"]}", mode = "{cur["mode"]}", position = "auto", '
-            f'scale = {cur["scale"]}, vrr = 2 }})')
+    pat = re.compile(r'\bhl\.monitor\s*\(\s*\{.*?}\s*\)', re.S)
+    masked = LUA_TOKEN.sub(lambda t: re.sub(r'[^\n]', ' ', t.group())
+                           if t.group().startswith(("--", '[', '"', "'")) and len(t.group()) > 1 else t.group(), text)
+    entries = [(entry, fields(text[entry.start():entry.end()]).get("output")) for entry in pat.finditer(masked)]
+    if len(re.findall(r'\bhl\.monitor\s*\(', masked)) != len(entries):
+        sys.exit(f"Cannot safely identify the monitor in {FILE}; edit it manually.")
+    old = next((entry for entry, output in entries if output
+                and output[0].group() in (f'"{m["name"]}"', f"'{m['name']}'") and output[1] in (",", "}")), None)
     if old:
-        text = pat.sub(line, text)
+        line = text[old.start():old.end()]
+        new_value = f'"{value}"' if key == "mode" else str(value)
+        if current := fields(line).get(key):
+            if current[1] not in (",", "}"):
+                sys.exit(f"Cannot safely edit {key} in {FILE}; edit the expression manually.")
+            token = current[0]
+            line = line[:token.start()] + new_value + line[token.end():]
+        else:
+            brace = masked[old.start():old.end()].index("{") + 1
+            line = line[:brace] + ("\n    " if "\n" in line else " ") + f'{key} = {new_value},' + line[brace:]
+        text = text[:old.start()] + line + text[old.end():]
     else:
+        if any(not output or output[1] not in (",", "}") or not output[0].group().startswith(('"', "'")) for _, output in entries):
+            sys.exit(f"Cannot safely identify the monitor in {FILE}; edit it manually.")
+        cur = {"mode": f'{m["width"]}x{m["height"]}@{round(m["refreshRate"])}', "scale": round(m["scale"], 2)}
+        cur[key] = value
+        line = (f'hl.monitor({{ output = "{m["name"]}", mode = "{cur["mode"]}", position = "auto", '
+                f'scale = {cur["scale"]}, vrr = 2 }})')
         text = text.rstrip("\n") + "\n" + line + "\n"
     open(FILE, "w").write(text)
     subprocess.run(["hyprctl", "reload"], capture_output=True)
