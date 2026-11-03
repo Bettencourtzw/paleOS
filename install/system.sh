@@ -18,7 +18,7 @@ fi
 if [[ ${PALEOS_UPDATE:-} == 1 ]]; then pacman -Syu --needed --noconfirm $pkgs; else pacman -S --needed --noconfirm $pkgs; fi
 
 # 2. the Rust app indexer used by the menu (prebuilt on the ISO, otherwise compiled once)
-if [[ -x bin/pale-apps ]]; then
+if [[ -f bin/pale-apps ]]; then      # (-f: the ISO copy loses its executable bit)
   install -m755 bin/pale-apps /usr/local/bin/pale-apps
 else
   had_rust=$(pacman -Q rust >/dev/null 2>&1 && echo yes || true)
@@ -32,7 +32,8 @@ fi
 install -Dm644 system/sysctl.d/99-paleos.conf /etc/sysctl.d/99-paleos.conf
 install -Dm644 system/resolved.conf.d/paleos.conf /etc/systemd/resolved.conf.d/paleos.conf
 install -Dm644 system/NetworkManager/paleos.conf /etc/NetworkManager/conf.d/paleos.conf
-ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+# inside the ISO installer's chroot /etc/resolv.conf is a temporary mount; the installer links it afterwards
+findmnt -n /etc/resolv.conf >/dev/null || ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 systemctl enable systemd-resolved
 sysctl --system >/dev/null 2>&1 || true
 ufw default deny incoming >/dev/null; ufw default allow outgoing >/dev/null; ufw --force enable >/dev/null 2>&1 || true

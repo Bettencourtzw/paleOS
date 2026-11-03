@@ -6,10 +6,17 @@ set -euo pipefail
 PALEOS_SRC=/usr/share/paleos         # repo copy baked into the ISO
 LOG=/tmp/paleos-install.log
 MNT=/mnt
+dmesg -n 3 2>/dev/null || true     # keep kernel messages off the installer screen
 : > "$LOG"
 
 # ---------- ui helpers ----------------------------------------------------------
 C=7   # foreground for headings (white-ish)
+# monochrome gum: white cursor/selection, gray headers and hints
+export GUM_CHOOSE_CURSOR_FOREGROUND=15 GUM_CHOOSE_HEADER_FOREGROUND=8 GUM_CHOOSE_SELECTED_FOREGROUND=15 GUM_CHOOSE_ITEM_FOREGROUND=7
+export GUM_FILTER_INDICATOR_FOREGROUND=15 GUM_FILTER_MATCH_FOREGROUND=15 GUM_FILTER_HEADER_FOREGROUND=8 GUM_FILTER_PROMPT_FOREGROUND=8 GUM_FILTER_SELECTED_PREFIX_FOREGROUND=15 GUM_FILTER_UNSELECTED_PREFIX_FOREGROUND=8 GUM_FILTER_HEIGHT=12
+export GUM_INPUT_HEADER_FOREGROUND=8 GUM_INPUT_PROMPT_FOREGROUND=15 GUM_INPUT_CURSOR_FOREGROUND=15
+export GUM_CONFIRM_PROMPT_FOREGROUND=7 GUM_CONFIRM_SELECTED_FOREGROUND=0 GUM_CONFIRM_SELECTED_BACKGROUND=15 GUM_CONFIRM_UNSELECTED_FOREGROUND=7 GUM_CONFIRM_UNSELECTED_BACKGROUND=0
+export GUM_SPIN_SPINNER_FOREGROUND=15 GUM_SPIN_TITLE_FOREGROUND=7
 title() { clear; gum style --foreground "$C" --bold --margin "1 2" "$(cat $PALEOS_SRC/iso/logo.txt 2>/dev/null || echo paleOS)"; gum style --margin "0 2" --foreground 8 "$1"; echo; }
 pick()  { gum choose --header "$1" "${@:2}"; }
 ask()   { gum input --header "$1" --value "${2:-}" --placeholder "${3:-}"; }
@@ -57,8 +64,10 @@ done
 
 title "Where should it go?"
 live=$(lsblk -no PKNAME "$(findmnt -no SOURCE /run/archiso/bootmnt 2>/dev/null)" 2>/dev/null || true)   # the USB stick itself
-mapfile -t disks < <(lsblk -dpno NAME,SIZE,MODEL -e 7,11 | awk -v live="/dev/$live" '$1 != live')
-(( ${#disks[@]} )) || die "No disk found to install to."
+# real disks only: no loop/CD/floppy devices, the USB stick itself, or anything under 16 GB
+big=$(lsblk -dpnbo NAME,SIZE -e 2,7,11 | awk '$2 >= 16*1024^3 {print $1}')
+mapfile -t disks < <(lsblk -dpno NAME,SIZE,MODEL -e 2,7,11 | awk -v live="/dev/$live" -v big="$big" 'BEGIN{n=split(big,b,"\n"); for(i=1;i<=n;i++) ok[b[i]]=1} $1 != live && ok[$1]')
+(( ${#disks[@]} )) || die "No disk of 16 GB or more found to install to."
 disk_line=$(pick "Disk" "${disks[@]}"); disk=${disk_line%% *}
 free_sectors=$(sfdisk --list-free "$disk" 2>/dev/null | awk '$1 ~ /^[0-9]+$/ && $3 ~ /^[0-9]+$/ {print $3}' | sort -n | tail -1)
 free_gb=$(( ${free_sectors:-0} * 512 / 1024**3 ))
@@ -186,14 +195,15 @@ latest=/tmp/paleos-latest; rm -rf "$latest"
 if git clone -q --depth 1 https://github.com/Bettencourtzw/paleOS.git "$latest" >>"$LOG" 2>&1; then
   # reuse the ISO's prebuilt app indexer if its source hasn't changed (saves compiling Rust)
   diff -rq --exclude=target "$PALEOS_SRC/tools/pale-apps" "$latest/tools/pale-apps" >/dev/null 2>&1 \
-    && [[ -x $PALEOS_SRC/bin/pale-apps ]] && cp "$PALEOS_SRC/bin/pale-apps" "$latest/bin/"
+    && [[ -f $PALEOS_SRC/bin/pale-apps ]] && cp "$PALEOS_SRC/bin/pale-apps" "$latest/bin/"
   PALEOS_SRC=$latest; echo "Using the latest paleOS from GitHub" >>"$LOG"
 else
   echo "GitHub not reachable; installing the paleOS copy from the ISO" >>"$LOG"
 fi
   run "Copying paleOS" "cp -a $PALEOS_SRC $MNT/home/$username/.local-paleos && arch-chroot $MNT bash -c 'install -d -o $username -g $username /home/$username/.local/share && mv /home/$username/.local-paleos /home/$username/.local/share/paleOS && chown -R $username:$username /home/$username/.local/share/paleOS'"
-  run "Installing the paleOS desktop" "arch-chroot $MNT env PALEOS_YES=1 PALEOS_USER=$username bash /home/$username/.local/share/paleOS/install/system.sh"
+  run "Installing the paleOS desktop" "arch-chroot $MNT env SNAP_PAC_SKIP=y PALEOS_YES=1 PALEOS_USER=$username bash /home/$username/.local/share/paleOS/install/system.sh"
   run "Setting up your desktop" "arch-chroot $MNT runuser -u $username -- env HOME=/home/$username PALEOS_KEYMAP=$keymap bash /home/$username/.local/share/paleOS/install/user.sh"
+ln -sf /run/systemd/resolve/stub-resolv.conf $MNT/etc/resolv.conf   # private DNS (can't be linked from inside the chroot)
 rm -f $MNT/root/paleos-chroot.sh
 
 # ---------- 7. done ---------------------------------------------------------------
