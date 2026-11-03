@@ -14,7 +14,7 @@
   "modules-right":  ["group/right"],
 
   "group/left":   { "orientation": "horizontal", "modules": ["custom/arch", "hyprland/workspaces"] },
-  "group/center": { "orientation": "horizontal", "modules": ["mpris", "clock"] },
+  "group/center": { "orientation": "horizontal", "modules": ["clock"] },
   "group/right":  {
     "orientation": "horizontal",
     "modules": ["group/tray-expander", "bluetooth", "network", "pulseaudio", "custom/display"]
@@ -33,14 +33,6 @@
     "sort-by-number": true
   },
 
-  "mpris": {
-    "format": "{player_icon}  {artist} — {title}",
-    "format-paused": "{status_icon}  {artist} — {title}",
-    "player-icons": { "default": "󰝚", "spotify": "󰓇", "chromium": "󰊯" },
-    "status-icons": { "paused": "󰏤" },
-    "max-length": 40,
-    "on-click": "playerctl play-pause"
-  },
 
   "clock": {
     "format": "{:%H:%M}",

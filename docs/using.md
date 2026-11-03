@@ -48,8 +48,9 @@ saver), screensaver, lock and sleep timers, and Lock / Sleep / Restart / Shut do
 ## The dock
 
 A dock sits at the bottom: an apps button, your pinned apps, then open apps (dots show how
-many windows each has). Click to open or switch to an app, right-click to pin or unpin. Turn it off
-or restyle it in Customize → Dock.
+many windows each has; the app you're in gets a wider one). Click to open or switch to an app,
+right-click for a menu (open, new window, pin/unpin, close), and drag icons to reorder them — drop an
+open app among the pinned ones to pin it. Turn it off or restyle it in Customize → Dock.
 
 ## The top bar
 

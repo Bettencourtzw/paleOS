@@ -13,6 +13,7 @@ Item {
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
+        preventStealing: true          // the page can't steal the drag and start scrolling
         onPressed: e => s.set(e.x)
         onPositionChanged: e => { if (pressed) s.set(e.x) }
         onWheel: e => s.moved(Math.max(0, Math.min(1, s.value + (e.angleDelta.y > 0 ? 0.05 : -0.05))))
