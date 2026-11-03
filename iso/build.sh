@@ -31,4 +31,5 @@ if command -v cargo >/dev/null; then
 fi
 
 mkarchiso -v -w "$WORK/build" -o "$REPO/out" "$P"
+rm -rf -- "${WORK:?}"   # only after a successful build; a failed one is kept for inspection
 echo "ISO: $(ls -1 "$REPO"/out/*.iso | tail -1)"
