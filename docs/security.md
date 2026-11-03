@@ -2,6 +2,13 @@
 
 paleOS sets a few things up so you don't have to.
 
+## Network requests
+
+During ISO installation, paleOS asks ipapi.co for a timezone based on your IP address. Adding a
+web app asks Google for its icon and includes the app's address in that request. The optional
+network speed test uses Cloudflare, and web searches from the menu use Google. These services
+receive your IP address when contacted.
+
 ## Private DNS — no leaks
 
 Every DNS lookup is sent **encrypted** (DNS-over-TLS) to [Quad9](https://quad9.net), with DNSSEC.

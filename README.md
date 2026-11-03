@@ -26,7 +26,7 @@ You get a calm, black-and-white desktop where everything has one obvious place:
   come as short lists. Pick one and it's installed.
 - **Keys that make sense.** Close, fullscreen, move windows and switch workspaces with a few
   keys you'll remember. `SUPER + K` lists them all.
-- **Safe by default.** Encrypted DNS with no leaks, a firewall, and nothing that phones home.
+- **Safe by default.** Encrypted DNS and a firewall. See [privacy & security](docs/security.md) for network requests made by optional tools.
 - **Ready for code.** Editors and dev servers get the limits they need.
 
 Underneath it's plain Arch with Hyprland: same packages, same wiki, nothing hidden. paleOS adds

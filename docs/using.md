@@ -26,6 +26,9 @@ Sound, network, Bluetooth and display live in the top bar; `SUPER + K` lists eve
 
 **Remove** uninstalls packages or web apps you added.
 
+Installing Steam enables multilib and offers a full system upgrade, as required when refreshing
+Arch package databases. Review pacman's changes before confirming.
+
 ## Customize
 
 **SUPER + SPACE → Customize** opens the settings app — a normal window, with tabs:

@@ -3,9 +3,12 @@
 # Starts from Arch's official ISO profile (releng) and adds the paleOS installer.
 set -euo pipefail
 [[ $EUID -eq 0 ]] || { echo "Run with sudo."; exit 1; }
-REPO=$(cd "$(dirname "$0")/.." && pwd)
-WORK=${WORK:-/tmp/paleos-iso}
-rm -rf "$WORK"; mkdir -p "$WORK"
+REPO=$(cd "$(dirname "$0")/.." && pwd -P)
+work_root=$(realpath -m "${WORK:-/tmp}")
+[[ $work_root != "$REPO" && $work_root != "$REPO/"* ]] || { echo "WORK must be outside the source tree."; exit 1; }
+mkdir -p "${WORK:-/tmp}"
+WORK=$(mktemp -d "${WORK:-/tmp}/paleos-iso.XXXXXXXX")
+echo "Build files: $WORK"
 cp -r /usr/share/archiso/configs/releng "$WORK/profile"
 P=$WORK/profile
 
@@ -18,7 +21,7 @@ sed -i "s/^airootfs_image_tool_options=.*/airootfs_image_tool_options=('-comp' '
 # installer + a copy of paleOS itself
 cp -a "$REPO/iso/airootfs/." "$P/airootfs/"
 install -d "$P/airootfs/usr/share/paleos"
-tar -C "$REPO" --exclude=.git --exclude=out --exclude='tools/*/target' -cf - . | tar -C "$P/airootfs/usr/share/paleos" -xf -
+tar -C "$REPO" --exclude=.git --exclude=.worktrees --exclude=out --exclude='tools/*/target' -cf - . | tar -C "$P/airootfs/usr/share/paleos" -xf -
 sed -i 's|^)$|  ["/usr/local/bin/paleos-setup"]="0:0:755"\n)|' "$P/profiledef.sh"
 
 # prebuild the Rust tool so installed systems don't need a compiler

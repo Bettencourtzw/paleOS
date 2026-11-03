@@ -102,7 +102,8 @@ fi
 part() { lsblk -nrpo NAME,PARTN "$disk" | awk -v n="$1" '$2==n {print $1}'; }
 before=$(lsblk -nrpo PARTN "$disk" | sort -n | tr '\n' ' ')
 if [[ $mode == Erase* ]]; then
-  run "Wiping $disk" "wipefs -af $disk; sgdisk --zap-all $disk"
+  run "Wiping $disk" "wipefs -af $disk && sgdisk --zap-all $disk"
+  before=""
 fi
 run "Creating partitions" "sgdisk -n 0:0:+1G -t 0:ef00 -c 0:paleOS-boot $disk && sgdisk -n 0:0:0 -t 0:8300 -c 0:paleOS $disk && partprobe $disk && udevadm settle"
 new=$(comm -13 <(tr ' ' '\n' <<<"$before" | sort) <(lsblk -nrpo PARTN "$disk" | sort) | sort -n)
@@ -117,7 +118,7 @@ if [[ $encrypt == yes ]]; then
   rootdev=/dev/mapper/cryptroot
 fi
 if [[ $fs == btrfs ]]; then
-  run "Creating btrfs" "mkfs.btrfs -f -L paleOS $rootdev && mount $rootdev $MNT && for s in @ @home @log @pkg; do btrfs subvolume create $MNT/\$s; done && umount $MNT"
+  run "Creating btrfs" "mkfs.btrfs -f -L paleOS $rootdev && mount $rootdev $MNT && for s in @ @home @log @pkg; do btrfs subvolume create $MNT/\$s || exit 1; done && umount $MNT"
   o=noatime,compress=zstd
   mount -o $o,subvol=@ "$rootdev" $MNT
   mkdir -p $MNT/{home,var/log,var/cache/pacman/pkg,boot}
@@ -172,7 +173,7 @@ run "Configuring the system" "arch-chroot $MNT bash /root/paleos-chroot.sh"
 printf '%s:%s\n' "$username" "$password" | arch-chroot $MNT chpasswd
 
 if has "Gaming"; then
-  run "Enabling multilib + installing Steam" "sed -i '/^#\\[multilib\\]/{s/^#//;n;s/^#//}' $MNT/etc/pacman.conf && arch-chroot $MNT pacman -Sy --noconfirm --needed steam gamemode lib32-gamemode $( grep -qi amd <<<"$gpu" && echo lib32-vulkan-radeon ) $( grep -qi intel <<<"$gpu" && echo lib32-vulkan-intel ) $( grep -qi nvidia <<<"$gpu" && echo lib32-nvidia-utils )"
+  run "Enabling multilib + installing Steam" "sed -i '/^#\\[multilib\\]/{s/^#//;n;s/^#//}' $MNT/etc/pacman.conf && arch-chroot $MNT pacman -Syu --noconfirm --needed steam gamemode lib32-gamemode $( grep -qi amd <<<"$gpu" && echo lib32-vulkan-radeon ) $( grep -qi intel <<<"$gpu" && echo lib32-vulkan-intel ) $( grep -qi nvidia <<<"$gpu" && echo lib32-nvidia-utils )"
 fi
 if has "AUR helper"; then
   run "Installing yay (AUR helper)" "arch-chroot $MNT pacman -S --noconfirm --needed base-devel && arch-chroot $MNT runuser -u $username -- bash -c 'cd /tmp && git clone --depth 1 https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -s --noconfirm' && arch-chroot $MNT bash -c 'pacman -U --noconfirm /tmp/yay-bin/yay-bin-*.pkg.tar.zst; rm -rf /tmp/yay-bin'"
