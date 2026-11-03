@@ -200,7 +200,7 @@ if git clone -q --depth 1 https://github.com/Bettencourtzw/paleOS.git "$latest" 
 else
   echo "GitHub not reachable; installing the paleOS copy from the ISO" >>"$LOG"
 fi
-  run "Copying paleOS" "cp -a $PALEOS_SRC $MNT/home/$username/.local-paleos && arch-chroot $MNT bash -c 'install -d -o $username -g $username /home/$username/.local/share && mv /home/$username/.local-paleos /home/$username/.local/share/paleOS && chown -R $username:$username /home/$username/.local/share/paleOS'"
+  run "Copying paleOS" "cp -a $PALEOS_SRC $MNT/home/$username/.local-paleos && arch-chroot $MNT bash -c 'install -d -o $username -g $username /home/$username/.local /home/$username/.local/share && mv /home/$username/.local-paleos /home/$username/.local/share/paleOS && chown -R $username:$username /home/$username/.local/share/paleOS'"
   run "Installing the paleOS desktop" "arch-chroot $MNT env SNAP_PAC_SKIP=y PALEOS_YES=1 PALEOS_USER=$username bash /home/$username/.local/share/paleOS/install/system.sh"
   run "Setting up your desktop" "arch-chroot $MNT runuser -u $username -- env HOME=/home/$username PALEOS_KEYMAP=$keymap bash /home/$username/.local/share/paleOS/install/user.sh"
 ln -sf /run/systemd/resolve/stub-resolv.conf $MNT/etc/resolv.conf   # private DNS (can't be linked from inside the chroot)
