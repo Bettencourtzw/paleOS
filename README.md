@@ -15,6 +15,8 @@ You get a calm, black-and-white desktop where everything has one obvious place:
 
 - **One key for everything.** `SUPER + SPACE` opens the menu: your apps, settings, installing
   software, power. Start typing to find any app.
+- **A dock for your apps.** Pinned and open apps at the bottom, like you're used to. Restyle it or
+  turn it off in Customize.
 - **One click for the basics.** Sound, Wi-Fi, Bluetooth and display each have an icon in the
   top bar. Click it, change it, click away.
 - **No config files to learn.** Background, window style, power and idle settings are in
