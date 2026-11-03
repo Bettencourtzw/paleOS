@@ -11,7 +11,7 @@ echo $$ > "$pidfile"; trap 'rm -f "$pidfile"' EXIT
 
 I=~/.local/share/menu-icons
 ids="${XDG_RUNTIME_DIR:-/tmp}/launcher-apps"
-sections=(Apps Learn Trigger Customize Display Setup Install Remove Update About System)
+sections=(Apps Learn Customize Install Remove Update System)
 nav=(-kb-custom-1 "Left" -kb-move-char-back "Control+b")          # Left exits rofi with code 10 = back
 open=(-kb-accept-entry "Return,KP_Enter,Right" -kb-move-char-forward "Control+f")
 look() { echo "entry {placeholder: \"$1\";}"; }
