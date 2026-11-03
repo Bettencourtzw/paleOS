@@ -40,8 +40,8 @@ the desktop, not the apps. You choose those.
 
 ## Install
 
-Boot the **paleOS ISO** and answer a few questions: disk, keyboard, account. Or add paleOS to an
-Arch install you already have:
+**[Download the paleOS ISO](https://github.com/Bettencourtzw/paleOS/releases/latest)**, write it to a USB stick, boot it
+and answer a few questions: disk, keyboard, account. Or add paleOS to an Arch install you already have:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Bettencourtzw/paleOS/main/boot.sh | bash

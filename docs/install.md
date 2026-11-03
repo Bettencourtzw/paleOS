@@ -2,10 +2,13 @@
 
 ## From the paleOS ISO (recommended)
 
-1. Write the ISO to a USB stick (`sudo dd if=paleos-….iso of=/dev/sdX bs=4M status=progress`, or Ventoy, or balenaEtcher).
-2. Boot it in **UEFI** mode. The installer starts on its own. It installs the newest paleOS from
+1. Download `paleos-<date>-x86_64.iso` and its `.sha256` file from the
+   [latest release](https://github.com/Bettencourtzw/paleOS/releases/latest), and check it:
+   `sha256sum -c paleos-*.iso.sha256`
+2. Write the ISO to a USB stick (`sudo dd if=paleos-….iso of=/dev/sdX bs=4M status=progress`, or Ventoy, or balenaEtcher).
+3. Boot it in **UEFI** mode. The installer starts on its own. It installs the newest paleOS from
    GitHub, or the copy on the ISO if there's no internet, so an older ISO is fine.
-3. Answer the questions:
+4. Answer the questions:
 
 | Step | Choices |
 |---|---|
