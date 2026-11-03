@@ -32,7 +32,7 @@ A home list: **Apps · Learn · Trigger · Customize · Display · Setup · Inst
 
 | Tab | What you can change |
 |---|---|
-| Background | A wallpaper, one of eight animated backgrounds (Arch pulse, Arch particles, Arch constellation, Night sky, Aurora, Waves, Snow, Fireflies — point at a card to preview it), or your own images and videos (**Add your own images or videos…**; videos become animated backgrounds) |
+| Background | A wallpaper, one of six animated backgrounds (Arch binary, Arch pulse, Arch particles, Arch constellation, Night sky, Aurora — point at a card to preview it), or your own images and videos (**Add your own images or videos…**; videos become animated backgrounds) |
 | Animation | Frame rate (15–60 fps), speed, detail, brightness, and when to pause: while an app is fullscreen, and/or while windows are open |
 | Windows | Border around the active window, gaps, rounded corners, blur, animations |
 | Top bar | Top or bottom, show/hide, colors |
@@ -83,7 +83,7 @@ network, sound, display. Each icon opens a small panel; click outside it or pres
 - Games (Steam/Proton, CS2, gamescope, Minecraft) always open **fullscreen over the bar**, and the screen won't sleep while they run.
 - **Alt-Tab** out of a fullscreen game shows the other window full-size; switching back restores the game's fullscreen.
 - **GameMode** is installed: add `gamemoderun %command%` to a Steam game's launch options.
-- Power mode (performance / balanced / power-saver) is in **System**.
+- Power mode (performance / balanced / power saver) is in **System → Power mode** and in Power settings.
 
 ## Idle
 
