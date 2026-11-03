@@ -1,0 +1,73 @@
+@import "colors.css";
+
+* {
+  font-family: "JetBrainsMono Nerd Font", "Font Awesome 6 Free";
+  font-size: 13px;
+  font-weight: bold;
+  min-height: 0;
+  border: none;
+  border-radius: 0;
+}
+
+/* The bar itself is invisible — only the islands show */
+window#waybar { background: transparent; color: @fg; }
+
+/* Islands */
+#left, #center, #right {
+  background: alpha(@bg, 0.88);
+  border: 1px solid @border;
+  border-radius: 12px;
+  padding: 0 6px;
+}
+
+/* Left: logo + workspaces */
+#custom-arch { color: @accent; font-size: 16px; padding: 0 10px 0 8px; }
+
+#workspaces button {
+  all: initial;
+  font-family: "JetBrainsMono Nerd Font";
+  font-weight: bold;
+  font-size: 13px;
+  color: @dim;
+  padding: 0 10px;
+  margin: 5px 1px;
+  border-radius: 9px;
+}
+#workspaces button:hover  { color: @fg; background: @bg-alt; }
+#workspaces button.active { color: @on-accent; background: @accent; padding: 0 16px; }
+#workspaces button.urgent { color: @red; }
+
+/* Center: media + clock */
+#mpris { color: @dim; padding: 0 12px 0 8px; }
+#clock { color: @fg; padding: 0 10px; }
+
+/* Right: system */
+#pulseaudio, #tray, #bluetooth, #network, #language, #custom-power {
+  color: @fg;
+  padding: 0 9px;
+}
+#pulseaudio.mic { padding-right: 6px; }
+#pulseaudio.muted, #pulseaudio.mic.source-muted,
+#bluetooth.disabled, #bluetooth.off, #network.disconnected { color: @dim; }
+#tray menu { background: @bg; color: @fg; border: 1px solid @border; border-radius: 8px; }
+#custom-power { color: @dim; padding-right: 10px; }
+#custom-power:hover { color: @red; }
+
+tooltip {
+  background: @bg;
+  border: 1px solid @border;
+  border-radius: 10px;
+}
+tooltip label { color: @fg; padding: 4px; }
+
+/* Tray right-click menus */
+menu { background: @bg; border: 1px solid @border; border-radius: 10px; padding: 6px; }
+menu menuitem { color: @fg; padding: 6px 12px; border-radius: 6px; }
+menu menuitem:hover { background: @bg-alt; }
+menu separator { background: @border; min-height: 1px; margin: 4px 6px; }
+
+/* Tray drawer arrow + CPU (Omarchy-style) */
+#custom-expand-icon, #cpu, #custom-display { color: @fg; padding: 0 9px; }
+#custom-display { padding-right: 12px; }
+#custom-expand-icon { color: @dim; }
+#custom-expand-icon:hover { color: @fg; }

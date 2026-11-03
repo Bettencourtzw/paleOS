@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# screenshot        -> select area, copy to clipboard + save (like Windows Snipping Tool)
+# screenshot edit   -> select area, open in the satty editor
+dir="$HOME/Pictures/Screenshots"; mkdir -p "$dir"
+file="$dir/screenshot-$(date +%Y%m%d-%H%M%S).png"
+region=$(slurp -d) || exit 0
+if [ "$1" = edit ]; then
+  grim -g "$region" - | satty --filename - --output-filename "$file" --copy-command wl-copy --early-exit
+else
+  grim -g "$region" "$file" && wl-copy --type image/png < "$file" \
+    && notify-send -u low -i "$file" "Screenshot copied" "Saved to Pictures/Screenshots"
+fi

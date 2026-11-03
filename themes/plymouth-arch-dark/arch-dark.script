@@ -1,0 +1,27 @@
+Window.SetBackgroundTopColor(0.055, 0.055, 0.055);
+Window.SetBackgroundBottomColor(0.055, 0.055, 0.055);
+bg = Image("bg.png");
+bg = bg.Scale(Window.GetWidth(), Window.GetHeight());
+sprite = Sprite(bg);
+sprite.SetPosition(Window.GetX(), Window.GetY(), -10);
+
+# small pulsing dot under the logo while booting / shutting down
+dot = Image.Text("•", 0.9, 0.9, 0.9, 1, "Sans 20");
+ds = Sprite(dot);
+ds.SetX(Window.GetX() + Window.GetWidth() / 2 - dot.GetWidth() / 2);
+ds.SetY(Window.GetY() + Window.GetHeight() * 0.72);
+t = 0;
+fun refresh() { t++; ds.SetOpacity(0.35 + 0.65 * Math.Abs(Math.Sin(t / 25))); }
+Plymouth.SetRefreshFunction(refresh);
+
+# password prompt (only used if you ever encrypt the disk)
+fun display_password(prompt, bullets) {
+  s = ""; for (i = 0; i < bullets; i++) s += "•";
+  pw = Image.Text(prompt + "  " + s, 0.9, 0.9, 0.9, 1, "Sans 14");
+  global.pws = Sprite(pw);
+  global.pws.SetX(Window.GetX() + Window.GetWidth() / 2 - pw.GetWidth() / 2);
+  global.pws.SetY(Window.GetY() + Window.GetHeight() * 0.78);
+}
+Plymouth.SetDisplayPasswordFunction(display_password);
+fun display_normal() { global.pws = NULL; }
+Plymouth.SetDisplayNormalFunction(display_normal);

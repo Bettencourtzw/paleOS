@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# SUPER+SPACE. Omarchy-style home list; typing searches apps too.
+#   Enter / Right : open    Left : back one level    Esc : close
+#   =2+2 calculator   :smile emoji   anything unmatched = web search
+# Section contents live in ~/.local/bin/menu.
+pidfile="${XDG_RUNTIME_DIR:-/tmp}/launcher.pid"
+if [ -f "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null; then
+  kill "$(cat "$pidfile")"; pkill -x rofi; rm -f "$pidfile"; exit 0
+fi
+echo $$ > "$pidfile"; trap 'rm -f "$pidfile"' EXIT
+
+I=~/.local/share/menu-icons
+ids="${XDG_RUNTIME_DIR:-/tmp}/launcher-apps"
+sections=(Apps Learn Trigger Style Display Setup Install Remove Update About System)
+nav=(-kb-custom-1 "Left" -kb-move-char-back "Control+b")          # Left exits rofi with code 10 = back
+open=(-kb-accept-entry "Return,KP_Enter,Right" -kb-move-char-forward "Control+f")
+look() { echo "entry {placeholder: \"$1\";}"; }
+chev() { printf '%-22s<span alpha="35%%">›</span>' "$1"; }
+launch() { setsid -f gtk-launch "$(sed -n "$(( $1 + 1 ))p" "$ids")" >/dev/null 2>&1; }
+
+# returns 1 = go back, otherwise exits the script
+apps() {
+  local i rc
+  i=$(python3 -I ~/.local/lib/menu/apps.py "$ids" | rofi -dmenu -i -show-icons -markup-rows -format i -p "" \
+      "${nav[@]}" -theme-str "$(look 'Search apps…')"); rc=$?
+  [ $rc -eq 10 ] && return 1; [ $rc -ne 0 ] && exit 0
+  [ "$i" -ge 0 ] 2>/dev/null && launch "$i"; exit 0
+}
+section() {
+  local s="$1" pick rc res
+  case "$s" in
+    apps) apps; return ;;
+    emoji) exec rofi -show emoji ;;
+    calc)  exec rofi -show calc ;;
+  esac
+  while true; do
+    pick=$(~/.local/bin/menu "$s" | rofi -dmenu -i -show-icons -no-custom -p "" "${nav[@]}" "${open[@]}" \
+        -theme-str "$(look "${s^}…")"); rc=$?
+    [ $rc -eq 10 ] && return 1; [ $rc -ne 0 ] && exit 0
+    res=$(~/.local/bin/menu "$s" "$pick")
+    case "$res" in
+      GOTO:*) section "${res#GOTO:}" ;;   # back from a sub-menu lands here again
+      *) exit 0 ;;
+    esac
+  done
+}
+
+# `launcher <section>` opens that section directly (Left then goes to the home list)
+[ -n "$1" ] && section "$1"
+
+while true; do
+  out=$( { for s in "${sections[@]}"; do printf '%s\0icon\x1f%s\n' "$(chev "$s")" "$I/${s,,}.svg"; done
+           python3 -I ~/.local/lib/menu/apps.py "$ids"; } \
+    | rofi -dmenu -i -show-icons -markup-rows -format 'i f' -p "" "${open[@]}" \
+        -theme-str "$(look 'Go…') listview {lines: ${#sections[@]};}") || exit 0
+  i=${out%% *}; text=${out#* }
+  if [ "$i" -ge 0 ] 2>/dev/null && [ "$i" -lt ${#sections[@]} ]; then
+    section "${sections[$i],,}"
+  elif [ "$i" -ge ${#sections[@]} ] 2>/dev/null; then
+    launch $(( i - ${#sections[@]} )); exit 0
+  else
+    case "$text" in
+      =*) exec rofi -show calc -filter "${text#=}" ;;
+      :*) exec rofi -show emoji -filter "${text#:}" ;;
+      "") exit 0 ;;
+      *)  q=${text#@}; setsid -f xdg-open "https://www.google.com/search?q=$(jq -rn --arg q "$q" '$q|@uri')" >/dev/null 2>&1; exit 0 ;;
+    esac
+  fi
+done
