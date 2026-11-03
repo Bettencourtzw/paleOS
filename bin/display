@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+"""display — read and change settings of the focused monitor (used by the menu and Display panel).
+
+  display info              name, resolution, refresh, scale (JSON)
+  display rates             refresh rates for the current resolution, e.g. 260, 240, 60
+  display scales            scales that give a sharp, whole-pixel result on this monitor
+  display set mode  WxH@R   e.g. 1920x1080@240
+  display set scale S       e.g. 1.25
+
+Settings are saved per monitor in ~/.config/hypr/monitors.lua, one line per output.
+"""
+import json, os, re, subprocess, sys
+
+FILE = os.path.expanduser("~/.config/hypr/monitors.lua")
+
+def focused():
+    mons = json.loads(subprocess.run(["hyprctl", "monitors", "-j"], capture_output=True, text=True).stdout)
+    return next((m for m in mons if m.get("focused")), mons[0])
+
+def rates(m):
+    res = f'{m["width"]}x{m["height"]}@'
+    r = {round(float(x[len(res):].rstrip("Hz"))) for x in m["availableModes"] if x.startswith(res)}
+    return sorted((x for x in r if x >= 60), reverse=True)
+
+def scales(m):
+    ok = [s for s in (1, 1.2, 1.25, 1.5, 1.6, 1.75, 2, 2.5, 3)
+          if (m["width"] / s).is_integer() and (m["height"] / s).is_integer()]
+    return [round(s, 2) for s in ok]
+
+def save(m, key, value):
+    text = open(FILE).read() if os.path.exists(FILE) else ""
+    cur = {"mode": f'{m["width"]}x{m["height"]}@{round(m["refreshRate"])}', "scale": round(m["scale"], 2)}
+    pat = re.compile(r'^hl\.monitor\(\{ output = "' + re.escape(m["name"]) + r'".*$', re.M)
+    old = pat.search(text)
+    if old:   # keep what's already saved for this monitor
+        if (mm := re.search(r'mode = "([^"]+)"', old.group(0))): cur["mode"] = mm.group(1)
+        if (ms := re.search(r'scale = ([0-9.]+)', old.group(0))): cur["scale"] = float(ms.group(1))
+    cur[key] = value
+    line = (f'hl.monitor({{ output = "{m["name"]}", mode = "{cur["mode"]}", position = "auto", '
+            f'scale = {cur["scale"]}, vrr = 2 }})')
+    if old:
+        text = pat.sub(line, text)
+    else:
+        text = text.rstrip("\n") + "\n" + line + "\n"
+    open(FILE, "w").write(text)
+    subprocess.run(["hyprctl", "reload"], capture_output=True)
+
+def main(a):
+    m = focused()
+    if a[:1] == ["info"]:  print(json.dumps({k: m[k] for k in ("name", "width", "height", "refreshRate", "scale")}))
+    elif a[:1] == ["rates"]:  print("\n".join(map(str, rates(m))))
+    elif a[:1] == ["scales"]: print("\n".join(map(str, scales(m))))
+    elif a[:2] == ["set", "mode"] and len(a) == 3:  save(m, "mode", a[2])
+    elif a[:2] == ["set", "scale"] and len(a) == 3: save(m, "scale", float(a[2]))
+    else: print(__doc__); sys.exit(2)
+
+main(sys.argv[1:])

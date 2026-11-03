@@ -10,7 +10,7 @@ Panel {
     readonly property var wired: devs.find(d => d.type === DeviceType.Wired) || null
     readonly property var wifi: devs.find(d => d.type === DeviceType.Wifi) || null
     readonly property var nets: wifi ? wifi.networks.values.slice().sort((a, b) => b.signalStrength - a.signalStrength).slice(0, 8) : []
-    readonly property var current: nets.find(n => n.connected) || null
+    readonly property var current: wifi ? (wifi.networks.values.find(n => n.connected) || null) : null
     property var asking: null   // network waiting for a password
     property string ping: "–"
     property string down: "–"
@@ -23,6 +23,7 @@ Panel {
             if (k === "ping") p.ping = v + " ms"
             if (k === "down") { p.down = v + " Mbps"; p.up = "…" }
             if (k === "up") p.up = v + " Mbps"
+            if (k === "error") { p.ping = "offline"; p.down = "–"; p.up = "–" }
         } }
     }
     function runSpeed() { if (speed.running) return; p.ping = "…"; p.down = "…"; p.up = "–"; speed.running = true }

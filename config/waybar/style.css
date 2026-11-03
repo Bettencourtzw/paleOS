@@ -1,7 +1,7 @@
 @import "colors.css";
 
 * {
-  font-family: "JetBrainsMono Nerd Font", "Font Awesome 6 Free";
+  font-family: "JetBrainsMono Nerd Font";
   font-size: 13px;
   font-weight: bold;
   min-height: 0;
@@ -42,16 +42,13 @@ window#waybar { background: transparent; color: @fg; }
 #clock { color: @fg; padding: 0 10px; }
 
 /* Right: system */
-#pulseaudio, #tray, #bluetooth, #network, #language, #custom-power {
+#pulseaudio, #tray, #bluetooth, #network {
   color: @fg;
   padding: 0 9px;
 }
-#pulseaudio.mic { padding-right: 6px; }
-#pulseaudio.muted, #pulseaudio.mic.source-muted,
+#pulseaudio.muted,
 #bluetooth.disabled, #bluetooth.off, #network.disconnected { color: @dim; }
 #tray menu { background: @bg; color: @fg; border: 1px solid @border; border-radius: 8px; }
-#custom-power { color: @dim; padding-right: 10px; }
-#custom-power:hover { color: @red; }
 
 tooltip {
   background: @bg;
@@ -67,7 +64,7 @@ menu menuitem:hover { background: @bg-alt; }
 menu separator { background: @border; min-height: 1px; margin: 4px 6px; }
 
 /* Tray drawer arrow + CPU (Omarchy-style) */
-#custom-expand-icon, #cpu, #custom-display { color: @fg; padding: 0 9px; }
+#custom-expand-icon, #custom-display { color: @fg; padding: 0 9px; }
 #custom-display { padding-right: 12px; }
 #custom-expand-icon { color: @dim; }
 #custom-expand-icon:hover { color: @fg; }

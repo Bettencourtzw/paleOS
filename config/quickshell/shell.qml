@@ -17,6 +17,8 @@ ShellRoot {
     }
 
     Polkit {}
+    Background {}
+    Customize { id: customize }
     SoundPanel     { open: shell.current === "sound";     onCloseRequested: shell.close() }
     BluetoothPanel { open: shell.current === "bluetooth"; onCloseRequested: shell.close() }
     NetworkPanel   { open: shell.current === "network";   onCloseRequested: shell.close() }
@@ -26,5 +28,10 @@ ShellRoot {
         target: "panel"
         function toggle(name: string): void { shell.toggle(name) }
         function close(): void { shell.close() }
+    }
+    IpcHandler {
+        target: "customize"
+        function open(): void { customize.open = true }
+        function toggle(): void { customize.open = !customize.open }
     }
 }

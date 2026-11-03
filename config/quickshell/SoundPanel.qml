@@ -7,12 +7,14 @@ Panel {
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
     readonly property var outputs: Pipewire.nodes.values.filter(n => n.isSink && !n.isStream && n.audio)
+    // Friendly names; if two outputs would get the same name, show their real names instead
+    function desc(n) { return n ? (n.description || n.nickname || n.name) : "" }
+    function isHdmi(n) { return /\bHDMI\b|DisplayPort/i.test(desc(n)) }
+    function friendly(n) { return isHdmi(n) ? "Monitor (HDMI)" : /Analog/i.test(desc(n)) ? "Speakers" : desc(n) }
     function nice(n) {
         if (!n) return "No output"
-        const d = n.description || n.nickname || n.name
-        if (/HDMI|DisplayPort|DP/i.test(d)) return "Monitor (HDMI)"
-        if (/Analog/i.test(d)) return "Speakers (Line Out)"
-        return d
+        const f = friendly(n)
+        return outputs.filter(o => friendly(o) === f).length > 1 ? desc(n) : f
     }
     function pct(n) { return n && n.audio ? Math.round(n.audio.volume * 100) + "%" : "" }
 
@@ -45,7 +47,7 @@ Panel {
             model: p.outputs
             delegate: Entry {
                 required property var modelData
-                glyph: /HDMI|DisplayPort/i.test(modelData.description) ? 0xF0379 : 0xF04C3
+                glyph: p.isHdmi(modelData) ? 0xF0379 : 0xF04C3
                 text: p.nice(modelData)
                 active: modelData === p.sink
                 detail: active ? "In use" : ""

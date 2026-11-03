@@ -1,12 +1,7 @@
 configuration {
-  modi: "drun,setup:~/.local/bin/menu setup,display:~/.local/bin/menu display,power:~/.local/bin/menu power,calc,emoji";
+  modi: "calc,emoji";
   show-icons: true;
   icon-theme: "Adwaita";
-  display-drun: "󰀻  Apps";
-  display-setup: "󰒓  Setup";
-  display-display: "󰍹  Display";
-  display-power: "󰐥  Power";
-  display-window: "󰖲  Windows";
   display-calc: "󰃬  Calc";
   display-emoji: "󰞅  Emoji";
   drun-display-format: "{name}";

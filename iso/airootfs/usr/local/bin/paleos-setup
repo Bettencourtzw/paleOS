@@ -1,0 +1,191 @@
+#!/usr/bin/env bash
+# paleOS installer — runs on the live ISO. Asks a few questions, then installs Arch
+# with pacstrap and the paleOS desktop on top.
+set -euo pipefail
+
+PALEOS_SRC=/usr/share/paleos         # repo copy baked into the ISO
+LOG=/tmp/paleos-install.log
+MNT=/mnt
+: > "$LOG"
+
+# ---------- ui helpers ----------------------------------------------------------
+C=7   # foreground for headings (white-ish)
+title() { clear; gum style --foreground "$C" --bold --margin "1 2" "$(cat $PALEOS_SRC/iso/logo.txt 2>/dev/null || echo paleOS)"; gum style --margin "0 2" --foreground 8 "$1"; echo; }
+pick()  { gum choose --header "$1" "${@:2}"; }
+ask()   { gum input --header "$1" --value "${2:-}" --placeholder "${3:-}"; }
+yes()   { gum confirm --default="${2:-true}" "$1"; }
+die()   { gum style --foreground 1 --margin "1 2" "$1"; echo "Log: $LOG"; exit 1; }
+run()   { local label=$1; shift; gum spin --spinner dot --title "$label" -- bash -c "$* >>$LOG 2>&1" || die "Failed: $label"; }
+
+# ---------- 0. checks -----------------------------------------------------------
+[[ -d /sys/firmware/efi ]] || die "paleOS needs a computer booted in UEFI mode."
+
+title "Welcome. This installs paleOS — Arch Linux with a calm, ready-to-use desktop."
+if ! ping -c1 -W3 archlinux.org >/dev/null 2>&1; then
+  dev=$(iwctl device list 2>/dev/null | awk '/station/{print $2; exit}')
+  [[ -n ${dev:-} ]] || die "No internet. Plug in a cable and run paleos-setup again."
+  iwctl station "$dev" scan; sleep 3
+  ssid=$(iwctl station "$dev" get-networks | sed -n '5,$p' | sed 's/\x1b\[[0-9;]*m//g' | awk '{$NF=""; $(NF)=""; print}' | sed 's/^[> ]*//; s/ *$//' | grep -v '^$' | gum choose --header "Wi-Fi network")
+  pass=$(gum input --password --header "Password for $ssid")
+  iwctl --passphrase "$pass" station "$dev" connect "$ssid"; sleep 4
+  ping -c1 -W3 archlinux.org >/dev/null 2>&1 || die "Still no internet."
+fi
+
+# ---------- 1. questions --------------------------------------------------------
+title "Pick a kernel"
+kernel=$(pick "Kernel" "linux — standard" "linux-zen — tuned for desktop and gaming" "linux-lts — long-term support")
+kernel=${kernel%% *}
+
+title "Language and keyboard"
+locale=$(grep -E 'UTF-8$' /usr/share/i18n/SUPPORTED | cut -d' ' -f1 | gum filter --header "Language" --value "en_US.UTF-8" --placeholder "type to search…" || true)
+locale=${locale:-en_US.UTF-8}
+keymap=$(localectl list-keymaps | gum filter --header "Keyboard layout" --placeholder "e.g. us, pt-latin1, de" || true)
+keymap=${keymap:-us}
+loadkeys "$keymap" 2>/dev/null || true
+guess_tz=$(curl -fsS --max-time 4 https://ipapi.co/timezone 2>/dev/null || echo UTC)
+timezone=$(timedatectl list-timezones | gum filter --header "Timezone (detected: $guess_tz — Enter to keep)" --value "$guess_tz" || true)
+timezone=${timezone:-$guess_tz}
+
+title "Your account"
+hostname=$(ask "Computer name" "paleos")
+while :; do username=$(ask "Username" "" "lowercase, no spaces"); [[ $username =~ ^[a-z_][a-z0-9_-]{0,31}$ ]] && break; gum style --foreground 1 "Use lowercase letters, digits, - or _"; done
+while :; do
+  password=$(gum input --password --header "Password for $username")
+  again=$(gum input --password --header "Same password again")
+  [[ -n $password && $password == "$again" ]] && break; gum style --foreground 1 "Passwords don't match (or empty). Try again."
+done
+
+title "Where should it go?"
+live=$(lsblk -no PKNAME "$(findmnt -no SOURCE /run/archiso/bootmnt 2>/dev/null)" 2>/dev/null || true)   # the USB stick itself
+mapfile -t disks < <(lsblk -dpno NAME,SIZE,MODEL -e 7,11 | awk -v live="/dev/$live" '$1 != live')
+(( ${#disks[@]} )) || die "No disk found to install to."
+disk_line=$(pick "Disk" "${disks[@]}"); disk=${disk_line%% *}
+free_sectors=$(sfdisk --list-free "$disk" 2>/dev/null | awk '$1 ~ /^[0-9]+$/ && $3 ~ /^[0-9]+$/ {print $3}' | sort -n | tail -1)
+free_gb=$(( ${free_sectors:-0} * 512 / 1024**3 ))
+modes=("Erase the whole disk")
+(( free_gb >= 30 )) && modes=("Install alongside what's there (uses ${free_gb} GB of free space)" "${modes[@]}")
+mode=$(pick "How" "${modes[@]}")
+fs=$(pick "Filesystem" "btrfs — with snapshots support" "ext4 — simple and classic"); fs=${fs%% *}
+encrypt=no; yes "Encrypt the disk? (asks for the password at boot)" false && encrypt=yes
+snapshots=no; [[ $fs == btrfs ]] && yes "Automatic snapshots before every update (snapper)?" true && snapshots=yes
+
+title "Extras — pick what you want (space to toggle, enter to confirm)"
+extras=$(gum choose --no-limit --header "Extras" --selected "Bluetooth" "Bluetooth" "Printing" "Gaming (Steam)" "AUR helper (yay)" "Flatpak" || true)
+has() { grep -qF "$1" <<<"$extras"; }
+
+# GPU / CPU detection
+gpu_pkgs="mesa"; gpu=$(lspci | grep -iE 'vga|3d|display' || true)
+grep -qi amd    <<<"$gpu" && gpu_pkgs+=" vulkan-radeon"
+grep -qi intel  <<<"$gpu" && gpu_pkgs+=" vulkan-intel intel-media-driver"
+grep -qi nvidia <<<"$gpu" && gpu_pkgs+=" nvidia-open-dkms nvidia-utils"
+ucode=""; grep -q AuthenticAMD /proc/cpuinfo && ucode=amd-ucode; grep -q GenuineIntel /proc/cpuinfo && ucode=intel-ucode
+
+# ---------- 2. summary ----------------------------------------------------------
+title "Ready to install"
+gum style --margin "0 2" --border rounded --padding "1 2" --border-foreground 8 \
+"Kernel      $kernel
+Language    $locale  ·  keyboard $keymap  ·  $timezone
+Account     $username @ $hostname
+Disk        $disk — ${mode%% (*}
+Filesystem  $fs$( [[ $encrypt == yes ]] && echo ', encrypted')$( [[ $snapshots == yes ]] && echo ', snapshots')
+Extras      $(echo "${extras:-none}" | paste -sd, | sed 's/,/, /g')
+GPU         ${gpu_pkgs}"
+echo
+if [[ $mode == Erase* ]]; then
+  gum style --margin "0 2" --foreground 1 "Everything on $disk will be erased."
+  [[ $(ask "Type ERASE to continue") == ERASE ]] || die "Cancelled — nothing was changed."
+else
+  yes "Install now? (existing partitions are left untouched)" || die "Cancelled — nothing was changed."
+fi
+
+# ---------- 3. disk -------------------------------------------------------------
+part() { lsblk -nrpo NAME,PARTN "$disk" | awk -v n="$1" '$2==n {print $1}'; }
+before=$(lsblk -nrpo PARTN "$disk" | sort -n | tr '\n' ' ')
+if [[ $mode == Erase* ]]; then
+  run "Wiping $disk" "wipefs -af $disk; sgdisk --zap-all $disk"
+fi
+run "Creating partitions" "sgdisk -n 0:0:+1G -t 0:ef00 -c 0:paleOS-boot $disk && sgdisk -n 0:0:0 -t 0:8300 -c 0:paleOS $disk && partprobe $disk && udevadm settle"
+new=$(comm -13 <(tr ' ' '\n' <<<"$before" | sort) <(lsblk -nrpo PARTN "$disk" | sort) | sort -n)
+esp=$(part "$(sed -n 1p <<<"$new")"); rootp=$(part "$(sed -n 2p <<<"$new")")
+[[ -b $esp && -b $rootp ]] || die "Could not find the new partitions."
+
+run "Formatting boot partition" "mkfs.fat -F32 -n PALEBOOT $esp"
+rootdev=$rootp
+if [[ $encrypt == yes ]]; then
+  printf '%s' "$password" | cryptsetup luksFormat --type luks2 --batch-mode "$rootp" - >>"$LOG" 2>&1 || die "Encryption failed"
+  printf '%s' "$password" | cryptsetup open "$rootp" cryptroot - >>"$LOG" 2>&1 || die "Could not unlock the new disk"
+  rootdev=/dev/mapper/cryptroot
+fi
+if [[ $fs == btrfs ]]; then
+  run "Creating btrfs" "mkfs.btrfs -f -L paleOS $rootdev && mount $rootdev $MNT && for s in @ @home @log @pkg; do btrfs subvolume create $MNT/\$s; done && umount $MNT"
+  o=noatime,compress=zstd
+  mount -o $o,subvol=@ "$rootdev" $MNT
+  mkdir -p $MNT/{home,var/log,var/cache/pacman/pkg,boot}
+  mount -o $o,subvol=@home "$rootdev" $MNT/home
+  mount -o $o,subvol=@log "$rootdev" $MNT/var/log
+  mount -o $o,subvol=@pkg "$rootdev" $MNT/var/cache/pacman/pkg
+else
+  run "Creating ext4" "mkfs.ext4 -F -L paleOS $rootdev"
+  mount "$rootdev" $MNT; mkdir -p $MNT/boot
+fi
+mount "$esp" $MNT/boot
+
+# ---------- 4. base system --------------------------------------------------------
+pkgs="base $kernel $kernel-headers linux-firmware $ucode sudo networkmanager grub efibootmgr os-prober zram-generator neovim git $gpu_pkgs"
+[[ $fs == btrfs ]] && pkgs+=" btrfs-progs"
+[[ $snapshots == yes ]] && pkgs+=" snapper snap-pac grub-btrfs inotify-tools"
+has Bluetooth && pkgs+=" bluez bluez-utils"
+has Printing && pkgs+=" cups cups-pdf system-config-printer"
+has Flatpak && pkgs+=" flatpak"
+run "Installing Arch (this takes a few minutes)" "pacstrap -K $MNT $pkgs"
+run "Writing fstab" "genfstab -U $MNT >> $MNT/etc/fstab"
+
+# ---------- 5. configure ----------------------------------------------------------
+luks_uuid=$( [[ $encrypt == yes ]] && blkid -s UUID -o value "$rootp" || true )
+cat > $MNT/root/paleos-chroot.sh <<CHROOT
+set -euo pipefail
+ln -sf /usr/share/zoneinfo/$timezone /etc/localtime; hwclock --systohc
+sed -i 's/^#\\($locale\\)/\\1/' /etc/locale.gen; grep -q '^en_US.UTF-8' /etc/locale.gen || sed -i 's/^#en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen; locale-gen
+echo "LANG=$locale" > /etc/locale.conf
+echo "KEYMAP=$keymap" > /etc/vconsole.conf
+echo "$hostname" > /etc/hostname
+printf '127.0.0.1 localhost\n::1 localhost\n127.0.1.1 $hostname.localdomain $hostname\n' > /etc/hosts
+useradd -m -G wheel -s /bin/bash "$username"
+echo '%wheel ALL=(ALL:ALL) ALL' > /etc/sudoers.d/10-wheel; chmod 440 /etc/sudoers.d/10-wheel
+passwd -l root >/dev/null
+printf '[zram0]\nzram-size = min(ram / 2, 8192)\ncompression-algorithm = zstd\n' > /etc/systemd/zram-generator.conf
+if [[ $encrypt == yes ]]; then
+  sed -i 's/^HOOKS=.*/HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block encrypt filesystems fsck)/' /etc/mkinitcpio.conf
+  sed -i 's|^GRUB_CMDLINE_LINUX=.*|GRUB_CMDLINE_LINUX="cryptdevice=UUID=$luks_uuid:cryptroot root=/dev/mapper/cryptroot"|' /etc/default/grub
+fi
+mkinitcpio -P
+sed -i 's/^#\\?GRUB_DISABLE_OS_PROBER=.*/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub
+grep -q '^GRUB_DISABLE_OS_PROBER=false' /etc/default/grub || echo GRUB_DISABLE_OS_PROBER=false >> /etc/default/grub
+grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=paleOS
+grub-mkconfig -o /boot/grub/grub.cfg
+systemctl enable NetworkManager fstrim.timer
+$( has Bluetooth && echo "systemctl enable bluetooth" )
+$( has Printing && echo "systemctl enable cups.socket" )
+if [[ $snapshots == yes ]]; then snapper --no-dbus -c root create-config /; systemctl enable snapper-timeline.timer snapper-cleanup.timer grub-btrfsd; fi
+CHROOT
+run "Configuring the system" "arch-chroot $MNT bash /root/paleos-chroot.sh"
+printf '%s:%s\n' "$username" "$password" | arch-chroot $MNT chpasswd
+
+if has "Gaming"; then
+  run "Enabling multilib + installing Steam" "sed -i '/^#\\[multilib\\]/{s/^#//;n;s/^#//}' $MNT/etc/pacman.conf && arch-chroot $MNT pacman -Sy --noconfirm --needed steam gamemode lib32-gamemode $( grep -qi amd <<<"$gpu" && echo lib32-vulkan-radeon ) $( grep -qi intel <<<"$gpu" && echo lib32-vulkan-intel ) $( grep -qi nvidia <<<"$gpu" && echo lib32-nvidia-utils )"
+fi
+if has "AUR helper"; then
+  run "Installing yay (AUR helper)" "arch-chroot $MNT pacman -S --noconfirm --needed base-devel && arch-chroot $MNT runuser -u $username -- bash -c 'cd /tmp && git clone --depth 1 https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -s --noconfirm' && arch-chroot $MNT bash -c 'pacman -U --noconfirm /tmp/yay-bin/yay-bin-*.pkg.tar.zst; rm -rf /tmp/yay-bin'"
+fi
+
+# ---------- 6. paleOS desktop -----------------------------------------------------
+  run "Copying paleOS" "cp -a $PALEOS_SRC $MNT/home/$username/.local-paleos && arch-chroot $MNT bash -c 'install -d -o $username -g $username /home/$username/.local/share && mv /home/$username/.local-paleos /home/$username/.local/share/paleOS && chown -R $username:$username /home/$username/.local/share/paleOS'"
+  run "Installing the paleOS desktop" "arch-chroot $MNT env PALEOS_YES=1 PALEOS_USER=$username bash /home/$username/.local/share/paleOS/install/system.sh"
+  run "Setting up your desktop" "arch-chroot $MNT runuser -u $username -- env HOME=/home/$username PALEOS_KEYMAP=$keymap bash /home/$username/.local/share/paleOS/install/user.sh"
+rm -f $MNT/root/paleos-chroot.sh
+
+# ---------- 7. done ---------------------------------------------------------------
+cp "$LOG" "$MNT/var/log/paleos-install.log"
+title "Done."
+gum style --margin "0 2" "paleOS is installed on $disk. Remove the USB stick when the screen goes dark."
+yes "Restart now?" && { umount -R $MNT; [[ $encrypt == yes ]] && cryptsetup close cryptroot; systemctl reboot; }

@@ -1,0 +1,12 @@
+[package]
+name = "pale-apps"
+version = "0.1.0"
+edition = "2021"
+description = "Fast app index for the paleOS menu (prints rofi rows, saves desktop IDs)"
+license = "MIT"
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
+panic = "abort"

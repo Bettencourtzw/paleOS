@@ -11,7 +11,7 @@ echo $$ > "$pidfile"; trap 'rm -f "$pidfile"' EXIT
 
 I=~/.local/share/menu-icons
 ids="${XDG_RUNTIME_DIR:-/tmp}/launcher-apps"
-sections=(Apps Learn Trigger Style Display Setup Install Remove Update About System)
+sections=(Apps Learn Trigger Customize Display Setup Install Remove Update About System)
 nav=(-kb-custom-1 "Left" -kb-move-char-back "Control+b")          # Left exits rofi with code 10 = back
 open=(-kb-accept-entry "Return,KP_Enter,Right" -kb-move-char-forward "Control+f")
 look() { echo "entry {placeholder: \"$1\";}"; }
@@ -21,7 +21,7 @@ launch() { setsid -f gtk-launch "$(sed -n "$(( $1 + 1 ))p" "$ids")" >/dev/null 2
 # returns 1 = go back, otherwise exits the script
 apps() {
   local i rc
-  i=$(python3 -I ~/.local/lib/menu/apps.py "$ids" | rofi -dmenu -i -show-icons -markup-rows -format i -p "" \
+  i=$(pale-apps "$ids" | rofi -dmenu -i -show-icons -markup-rows -format i -p "" \
       "${nav[@]}" -theme-str "$(look 'Search apps…')"); rc=$?
   [ $rc -eq 10 ] && return 1; [ $rc -ne 0 ] && exit 0
   [ "$i" -ge 0 ] 2>/dev/null && launch "$i"; exit 0
@@ -30,6 +30,7 @@ section() {
   local s="$1" pick rc res
   case "$s" in
     apps) apps; return ;;
+    customize) qs ipc call customize open >/dev/null 2>&1; exit 0 ;;
     emoji) exec rofi -show emoji ;;
     calc)  exec rofi -show calc ;;
   esac
@@ -50,7 +51,7 @@ section() {
 
 while true; do
   out=$( { for s in "${sections[@]}"; do printf '%s\0icon\x1f%s\n' "$(chev "$s")" "$I/${s,,}.svg"; done
-           python3 -I ~/.local/lib/menu/apps.py "$ids"; } \
+           pale-apps "$ids"; } \
     | rofi -dmenu -i -show-icons -markup-rows -format 'i f' -p "" "${open[@]}" \
         -theme-str "$(look 'Go…') listview {lines: ${#sections[@]};}") || exit 0
   i=${out%% *}; text=${out#* }

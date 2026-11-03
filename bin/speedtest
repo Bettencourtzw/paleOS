@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# Network speed test (Cloudflare). Prints: "ping <ms>", "down <Mbps>", "up <Mbps>"
-ping_ms=$(curl -s -o /dev/null -w '%{time_connect}' https://speed.cloudflare.com/__down?bytes=0 | awk '{printf "%.0f", $1*1000}')
-echo "ping $ping_ms"
+# Network speed test against Cloudflare. Prints "ping <ms>", "down <Mbps>", "up <Mbps>" (or "error <msg>").
+url=https://speed.cloudflare.com
+ping=$(curl -fsS -o /dev/null -w '%{time_connect}' --max-time 5 "$url/__down?bytes=0") || { echo "error offline"; exit 1; }
+echo "ping $(awk -v t="$ping" 'BEGIN{printf "%.0f", t*1000}')"
+# 4 parallel downloads; count the bytes that really arrived
 t0=$(date +%s%N)
-for i in 1 2 3 4; do curl -s -o /dev/null --max-time 20 "https://speed.cloudflare.com/__down?bytes=50000000" & done; wait
-down=$(( 200000000 * 8 / ( ($(date +%s%N) - t0) / 1000 ) ))   # bits per microsecond = Mbps
-echo "down $down"
-up=$(head -c 50000000 /dev/urandom | curl -s -o /dev/null -w '%{speed_upload}' --max-time 15 -X POST --data-binary @- https://speed.cloudflare.com/__up | awk '{printf "%.0f", $1*8/1000000}')
-echo "up $up"
+bytes=$(for i in 1 2 3 4; do curl -s -o /dev/null -w '%{size_download}\n' --max-time 15 "$url/__down?bytes=50000000" & done; wait)
+us=$(( ($(date +%s%N) - t0) / 1000 ))
+echo "down $(awk -v u="$us" '{b += $1} END {printf "%.0f", b*8/u}' <<<"$bytes")"
+up=$(head -c 25000000 /dev/urandom | curl -s -o /dev/null -w '%{speed_upload}' --max-time 15 -X POST --data-binary @- "$url/__up")
+echo "up $(awk -v s="$up" 'BEGIN{printf "%.0f", s*8/1000000}')"

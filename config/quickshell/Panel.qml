@@ -15,8 +15,10 @@ PanelWindow {
 
     visible: open
     color: "transparent"
-    anchors { top: true; right: true }
-    margins { top: 46; right: 10 }
+    // follows the top bar (top or bottom, set in Customize)
+    readonly property bool barBottom: Settings.data.barPosition === "bottom"
+    anchors { top: !barBottom; bottom: barBottom; right: true }
+    margins { top: 46; bottom: 46; right: 10 }
     implicitWidth: 380
     implicitHeight: card.height
     exclusionMode: ExclusionMode.Ignore
