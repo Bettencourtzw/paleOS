@@ -33,9 +33,10 @@ Sound, network, Bluetooth and display live in the top bar; `SUPER + K` lists eve
 | Tab | What you can change |
 |---|---|
 | Background | A wallpaper, one of six animated backgrounds (Arch binary, Arch pulse, Arch particles, Arch constellation, Night sky, Aurora — point at a card to preview it), or your own images and videos (**Add your own images or videos…**; videos become animated backgrounds) |
-| Animation | Frame rate (15–60 fps), speed, brightness, and when to pause: while an app is fullscreen, and/or while windows are open |
+| Animation | Frame rate (15–60 fps), speed (built-in backgrounds), brightness, and when to pause: while an app is fullscreen, and/or while windows are open |
 | Windows | Border around the active window, gaps, rounded corners, blur, animations |
 | Top bar | Top or bottom, show/hide, colors |
+| Dock | On/off, auto-hide, icon size, background opacity, corners, spacing, distance from the bottom, open-app dots |
 
 Paused backgrounds use no CPU or GPU. Everything applies as you click.
 
@@ -43,6 +44,12 @@ Paused backgrounds use no CPU or GPU. Everything applies as you click.
 
 **SUPER + SPACE → System → Power settings** (or `SUPER + ESC`): power mode (performance / balanced /
 saver), screensaver, lock and sleep timers, and Lock / Sleep / Restart / Shut down.
+
+## The dock
+
+A dock sits at the bottom: an apps button, your pinned apps, then open apps (dots show how
+many windows each has). Click to open or switch to an app, right-click to pin or unpin. Turn it off
+or restyle it in Customize → Dock.
 
 ## The top bar
 

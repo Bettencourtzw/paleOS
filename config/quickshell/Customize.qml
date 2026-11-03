@@ -120,13 +120,11 @@ FloatingWindow {
                 Text { text: Theme.icon(0xF03D8); color: Theme.fg; font.family: Theme.font; font.pixelSize: 24 }
                 Text { text: "Customize"; color: Theme.fg; font.family: Theme.font; font.pixelSize: 17; font.bold: true; anchors.verticalCenter: parent.verticalCenter } }
             Repeater {
-                model: [ { g: 0xF02E9, t: "Background" }, { g: 0xF0E7B, t: "Animation" }, { g: 0xF05B2, t: "Windows" }, { g: 0xF06DF, t: "Top bar" } ]
+                model: [ { g: 0xF02E9, t: "Background" }, { g: 0xF0E7B, t: "Animation" }, { g: 0xF05B2, t: "Windows" }, { g: 0xF06DF, t: "Top bar" }, { g: 0xF0E7A, t: "Dock" } ]
                 delegate: Entry { required property var modelData; required property int index
                                   glyph: modelData.g; text: modelData.t; active: win.tab === index; onClicked: win.tab = index }
             }
         }
-        Text { x: 16; anchors.bottom: parent.bottom; anchors.bottomMargin: 18; width: parent.width - 32; wrapMode: Text.WordWrap
-               text: "Changes apply right away.\nPower & idle: SUPER+SPACE → System."; color: Theme.dim; font.family: Theme.font; font.pixelSize: 10 }
     }
 
     // ---- pages ------------------------------------------------------------------------------
@@ -155,7 +153,7 @@ FloatingWindow {
                             color: Theme.bgAlt; border.width: on ? 2 : 1; border.color: on ? Theme.fg : Theme.border
                             Image { anchors.fill: parent; anchors.margins: 3; source: "file://" + parent.modelData; fillMode: Image.PreserveAspectCrop; sourceSize.width: 320; asynchronous: true }
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: win.pickImage(parent.modelData) } } } }
-                Entry { glyph: 0xF0415; text: "Add your own images or videos…"; detail: "videos become animated backgrounds"; onClicked: addFiles.open() }
+                Entry { glyph: 0xF0415; text: "Add your own images or videos…"; onClicked: addFiles.open() }
                 Entry { glyph: 0xF024B; text: "Open the wallpapers folder"; onClicked: Quickshell.execDetached(["nautilus", win.home + "/Wallpapers"]) }
             }
 
@@ -165,14 +163,12 @@ FloatingWindow {
                 Preview {}
                 Hint { text: "Frame rate" }
                 Choice { options: [15, 24, 30, 45, 60].map(f => ({ label: f + " fps", value: f })); current: win.s.bgFps; onPicked: v => win.set("bgFps", v) }
-                Setting { text: "Speed"; from: 0.25; to: 2; value: win.s.bgSpeed; shown: win.s.bgSpeed.toFixed(2) + "×"; onChanged: v => win.set("bgSpeed", Math.round(v * 20) / 20) }
+                Setting { visible: win.s.background !== "static" && !win.s.background.startsWith("video:"); text: "Speed"; from: 0.25; to: 2; value: win.s.bgSpeed; shown: win.s.bgSpeed.toFixed(2) + "×"; onChanged: v => win.set("bgSpeed", Math.round(v * 20) / 20) }
                 Setting { text: "Brightness"; from: 0.4; to: 1.2; value: win.s.bgBrightness; shown: Math.round(win.s.bgBrightness * 100) + "%"; onChanged: v => win.set("bgBrightness", Math.round(v * 20) / 20) }
                 Heading { text: "WHEN TO PAUSE" }
                 Switcher { text: "Pause while an app is fullscreen"; checked: win.s.pauseFullscreen; onToggled: win.set("pauseFullscreen", !win.s.pauseFullscreen) }
                 Switcher { text: "Pause while windows are open"; checked: win.s.pauseWindows || win.s.animate === "visible"
                            onToggled: { const on = win.s.pauseWindows || win.s.animate === "visible"; win.set("animate", ""); win.set("pauseWindows", !on) } }
-                Hint { width: parent.width; wrapMode: Text.WordWrap
-                        text: "Paused backgrounds use no CPU or GPU. A lower frame rate uses less while running." }
             }
 
             // Windows --------------------------------------------------------------------------
@@ -183,6 +179,20 @@ FloatingWindow {
                 Setting { text: "Rounded corners"; from: 0; to: 20; value: win.s.rounding; shown: win.s.rounding + " px"; onChanged: v => win.set("rounding", Math.round(v)) }
                 Switcher { text: "Blur behind see-through windows"; checked: win.s.blur; onToggled: win.set("blur", !win.s.blur) }
                 Switcher { text: "Animations"; checked: win.s.animations; onToggled: win.set("animations", !win.s.animations) }
+            }
+
+            // Dock -----------------------------------------------------------------------------
+            Column { visible: win.tab === 4; width: parent.width; spacing: 16
+                Heading { text: "DOCK" }
+                Switcher { text: "Show the dock"; checked: win.s.dock; onToggled: win.set("dock", !win.s.dock) }
+                Switcher { visible: win.s.dock; text: "Hide until the mouse reaches the bottom"; checked: win.s.dockAutohide; onToggled: win.set("dockAutohide", !win.s.dockAutohide) }
+                Setting { visible: win.s.dock; text: "Icon size"; from: 28; to: 72; value: win.s.dockSize; shown: win.s.dockSize + " px"; onChanged: v => win.set("dockSize", Math.round(v / 2) * 2) }
+                Setting { visible: win.s.dock; text: "Background opacity"; from: 0; to: 1; value: win.s.dockOpacity; shown: Math.round(win.s.dockOpacity * 100) + "%"; onChanged: v => win.set("dockOpacity", Math.round(v * 20) / 20) }
+                Setting { visible: win.s.dock; text: "Rounded corners"; from: 0; to: 28; value: win.s.dockRadius; shown: win.s.dockRadius + " px"; onChanged: v => win.set("dockRadius", Math.round(v)) }
+                Setting { visible: win.s.dock; text: "Space between icons"; from: 0; to: 20; value: win.s.dockSpacing; shown: win.s.dockSpacing + " px"; onChanged: v => win.set("dockSpacing", Math.round(v)) }
+                Setting { visible: win.s.dock; text: "Distance from the bottom"; from: 0; to: 40; value: win.s.dockMargin; shown: win.s.dockMargin + " px"; onChanged: v => win.set("dockMargin", Math.round(v)) }
+                Switcher { visible: win.s.dock; text: "Dots under open apps"; checked: win.s.dockDots; onToggled: win.set("dockDots", !win.s.dockDots) }
+                Hint { visible: win.s.dock; width: parent.width; wrapMode: Text.WordWrap; text: "Right-click an app in the dock to pin or unpin it." }
             }
 
             // Top bar --------------------------------------------------------------------------

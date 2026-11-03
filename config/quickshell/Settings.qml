@@ -24,6 +24,16 @@ Singleton {
             property bool pauseFullscreen: true    // freeze while an app is fullscreen
             property bool pauseWindows: false      // freeze while windows are open on that desktop
             property string animate: ""            // old setting, migrated to pauseWindows
+            // dock
+            property bool dock: true
+            property bool dockAutohide: false
+            property int dockSize: 44
+            property real dockOpacity: 0.92
+            property int dockRadius: 14
+            property int dockSpacing: 6
+            property int dockMargin: 8
+            property bool dockDots: true
+            property var dockPinned: ["org.gnome.Nautilus.desktop", "foot.desktop", "firefox.desktop", "chromium.desktop"]   // missing apps are skipped
             // windows + bar
             property string barPosition: "top"
             property int gaps: 12
