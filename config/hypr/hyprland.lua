@@ -104,7 +104,11 @@ hl.window_rule({ name = "screensaver", match = { class = "^screensaver$" }, full
 
 -- Alt-Tab out of a fullscreen game: the other window takes over fullscreen;
 -- switching back gives the game its fullscreen again (default would drop it).
-hl.config({ misc = { on_focus_under_fullscreen = 1 } })
+hl.config({ misc = {
+    on_focus_under_fullscreen = 1,
+    -- when that other window closes, fullscreen goes back to the game (it would otherwise stay windowed)
+    exit_window_retains_fullscreen = true,
+} })
 
 ---- CUSTOMIZE ----
 -- Gaps, rounding and animations from the Customize app (SUPER+SPACE → Customize).
