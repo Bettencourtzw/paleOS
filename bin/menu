@@ -112,14 +112,18 @@ about)
 
 system)
   [ -z "$pick" ] && { row system "Power settings"; row lock "Lock"; row sleep "Suspend"; row logout "Log out"; row reboot "Restart"; row shutdown "Shut down"
-                      command -v powerprofilesctl >/dev/null && { cur=$(powerprofilesctl get)
-                        for p in performance balanced power-saver; do row about "Power mode: $p$( [ "$p" = "$cur" ] && echo '  ✓')"; done; }
+                      command -v powerprofilesctl >/dev/null && row about "Power mode"
                       exit; }
   case "$pick" in
     "Power settings") panel power ;;
     "Lock") run "pidof hyprlock || hyprlock" ;; "Suspend") run "systemctl suspend" ;;
     "Log out") run "hyprctl dispatch 'hl.dsp.exit()'" ;;
     "Restart") run "systemctl reboot" ;; "Shut down") run "systemctl poweroff" ;;
-    "Power mode: "*) p=${pick#Power mode: }; powerprofilesctl set "${p%%  *}" ;;
+    "Power mode") echo "GOTO:power-mode" ;;
   esac ;;
+
+power-mode)   # all power modes in one place
+  [ -z "$pick" ] && { cur=$(powerprofilesctl get 2>/dev/null)
+    for p in Performance Balanced "Power saver"; do id=$(tr 'A-Z ' 'a-z-' <<<"$p"); row about "$p$( [ "$id" = "$cur" ] && echo '  ✓')"; done; exit; }
+  id=$(tr 'A-Z ' 'a-z-' <<<"${pick%%  *}"); powerprofilesctl set "$id" && notify-send -u low "Power mode" "${pick%%  *}" ;;
 esac

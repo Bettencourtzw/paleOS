@@ -25,14 +25,12 @@ FloatingWindow {
 
     // ---- backgrounds: built-ins, your videos, your images ----------------------------------
     readonly property var builtins: [
+        { name: "arch-binary",        label: "Arch binary",        about: "Deep black · the logo in flipping 0s and 1s" },
         { name: "arch-pulse",         label: "Arch pulse",         about: "Deep black · the symbol, orbits, ripples" },
         { name: "arch-particles",     label: "Arch particles",     about: "Deep black · particles spiral into the logo" },
         { name: "arch-constellation", label: "Arch constellation", about: "The logo traced in stars, in a cloudy sky" },
         { name: "night",              label: "Night sky",          about: "Drifting clouds, stars, shooting stars" },
-        { name: "aurora",             label: "Aurora",             about: "Curtains of pale light" },
-        { name: "waves",              label: "Waves",              about: "Fine lines like a slow map" },
-        { name: "snow",               label: "Snow",               about: "Flakes at three depths, soft up close" },
-        { name: "fireflies",          label: "Fireflies",          about: "Glowing points floating and pulsing" }]
+        { name: "aurora",             label: "Aurora",             about: "Curtains of pale light" }]
     property var videos: []
     property var images: []
     property string currentImage: ""
