@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Display panel: resolution + refresh rate, scale, night light. Uses ~/.local/bin/display (focused monitor).
+// Display panel: resolution + refresh rate, scale, HDR, night light. Uses ~/.local/bin/display (focused monitor).
 Panel {
     id: p
     property var mon: null
@@ -58,6 +58,14 @@ Panel {
     Level {
         value: p.maxScale > 1 ? (p.pending - 1) / (p.maxScale - 1) : 0
         onMoved: v => { p.pending = p.nearest(1 + v * (p.maxScale - 1)); applyScale.restart() }
+    }
+
+    // HDR is never switched on by apps (cm_auto_hdr = 0); it's on all the time or off all the time
+    Heading { text: "HDR" }
+    Switcher {
+        text: "HDR (always on)"
+        checked: p.mon ? p.mon.hdr : false
+        onToggled: { apply.command = [p.tool, "set", "hdr", p.mon && p.mon.hdr ? "off" : "on"]; apply.running = true }
     }
 
     Heading { text: "NIGHT LIGHT" }

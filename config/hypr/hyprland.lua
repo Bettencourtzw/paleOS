@@ -40,7 +40,10 @@ hl.config({
     },
     dwindle = { preserve_split = true },
     misc = { force_default_wallpaper = 0, disable_hyprland_logo = true },
-    render = { direct_scanout = 2 },           -- fullscreen games bypass the compositor
+    render = {
+        direct_scanout = 2,                    -- fullscreen games bypass the compositor
+        cm_auto_hdr = 0,                       -- never switch HDR on for a fullscreen app (black flash + dim picture);
+    },                                         -- HDR is on or off all the time: Display panel → HDR
     layers = { allow_new_top_layers_over_existing_fullscreen = true },
 })
 
