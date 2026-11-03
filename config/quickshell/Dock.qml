@@ -295,12 +295,12 @@ Scope {
                                 required property var modelData
                                 glyph: modelData.g; text: modelData.t
                                 onClicked: {
-                                    // read everything first: closing the menu removes this item
-                                    const a = modelData.a, e = dock.menuFor
-                                    dock.menuFor = null
-                                    if (a === "open" || a === "new") dock.launch(e)
-                                    else if (a === "pin") dock.togglePin(e)
-                                    else if (a === "close") dock.closeAll(e)
+                                    // grab everything first: closing the menu destroys this item (and its name lookups)
+                                    const d = dock, a = modelData.a, e = d.menuFor
+                                    if (a === "open" || a === "new") d.launch(e)
+                                    else if (a === "pin") d.togglePin(e)
+                                    else if (a === "close") d.closeAll(e)
+                                    d.menuFor = null
                                 }
                             }
                         }
