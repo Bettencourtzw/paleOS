@@ -7,7 +7,7 @@ function o.bind(keys, description, dispatcher, options)
   local opts = options or {}
   if description then opts.description = description end
   if type(dispatcher) == "string" then dispatcher = hl.dsp.exec_cmd(dispatcher) end
-  hl.bind(keys, dispatcher, opts)
+  return hl.bind(keys, dispatcher, opts)
 end
 
 local terminal = "foot"
@@ -66,8 +66,20 @@ o.bind("SUPER + code:21", "Shrink window left", hl.dsp.window.resize({ x = 100, 
 o.bind("SUPER + SHIFT + code:20", "Shrink window up", hl.dsp.window.resize({ x = 0, y = -100, relative = true }))
 o.bind("SUPER + SHIFT + code:21", "Expand window down", hl.dsp.window.resize({ x = 0, y = 100, relative = true }))
 
-o.bind("SUPER + mouse:272", "Move window", hl.dsp.window.drag(), { mouse = true })
-o.bind("SUPER + mouse:273", "Resize window", hl.dsp.window.resize(), { mouse = true })
+local mouse_binds = {
+  o.bind("SUPER + mouse:272", "Move window", hl.dsp.window.drag(), { mouse = true }),
+  o.bind("SUPER + mouse:273", "Resize window", hl.dsp.window.resize(), { mouse = true }),
+}
+-- ...but not while an app is fullscreen (a stray SUPER + click would pull a game out of fullscreen)
+local function mouse_binds_follow_fullscreen()
+  local ws = hl.get_active_workspace()
+  local on = not (ws and ws.has_fullscreen)
+  for _, b in ipairs(mouse_binds) do if b then b:set_enabled(on) end end
+end
+-- events fire just before the state changes, so look a moment later
+for _, event in ipairs({ "window.fullscreen", "window.active", "window.close", "window.destroy", "workspace.active" }) do
+  hl.on(event, function() hl.timer(mouse_binds_follow_fullscreen, { timeout = 150, type = "oneshot" }) end)
+end
 
 -- Your own: move floating windows with the keyboard (50px per press)
 o.bind("SUPER + CTRL + ALT + LEFT", "Move floating window left", hl.dsp.window.move({ x = -50, y = 0, relative = true }))
