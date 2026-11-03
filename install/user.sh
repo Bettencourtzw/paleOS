@@ -24,7 +24,7 @@ done
 mkdir -p ~/.local/bin ~/.local/lib ~/.local/share ~/Wallpapers
 install -m755 bin/* ~/.local/bin/
 rm -f ~/.local/bin/pale-apps                                  # lives in /usr/local/bin
-cp -a lib/. ~/.local/lib/ && cp -a share/. ~/.local/share/ && cp -n wallpapers/* ~/Wallpapers/
+cp -a share/. ~/.local/share/ && cp -n wallpapers/* ~/Wallpapers/
 [[ -e $C/hypr/wallpaper || -L $C/hypr/wallpaper ]] || ln -sfn ~/Wallpapers/arch-dark.png "$C/hypr/wallpaper"
 sed -i "s|\$HOME|$HOME|" "$C/hypr/hyprpaper.conf"
 

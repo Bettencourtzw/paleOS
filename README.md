@@ -58,4 +58,4 @@ It never forces a system update, and it backs up anything it replaces.
 | [How it's built](docs/architecture.md) | What lives where |
 | [Building the ISO](docs/iso.md) | Make your own installer image |
 
-Inspired by [Omarchy](https://github.com/basecamp/omarchy). MIT licensed.
+MIT licensed.

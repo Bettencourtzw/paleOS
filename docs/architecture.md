@@ -15,7 +15,7 @@ paleOS is small on purpose: standard Arch packages, configured with plain files.
 | Monitor settings helper | `bin/display` (used by menu and panel) | `bin/` |
 | Notifications / OSD | mako, swayosd | `config/mako/` |
 | Lock / idle / wallpaper | hyprlock, hypridle, hyprpaper | `config/hypr/` |
-| Screensaver | foot + `lib/menu/screensaver.py` | `bin/`, `lib/` |
+| Screensaver | Quickshell overlay (`Screensaver.qml`) | `config/quickshell/` |
 | Login screen | SDDM theme (QML) | `themes/sddm-arch-dark/` |
 | Boot splash | Plymouth script theme | `themes/plymouth-arch-dark/` |
 | Installer (existing Arch) | `install.sh` → `install/system.sh` (root) + `install/user.sh` (you) | `install/` |
