@@ -192,7 +192,6 @@ FloatingWindow {
                 Setting { visible: win.s.dock; text: "Space between icons"; from: 0; to: 20; value: win.s.dockSpacing; shown: win.s.dockSpacing + " px"; onChanged: v => win.set("dockSpacing", Math.round(v)) }
                 Setting { visible: win.s.dock; text: "Distance from the bottom"; from: 0; to: 40; value: win.s.dockMargin; shown: win.s.dockMargin + " px"; onChanged: v => win.set("dockMargin", Math.round(v)) }
                 Switcher { visible: win.s.dock; text: "Dots under open apps"; checked: win.s.dockDots; onToggled: win.set("dockDots", !win.s.dockDots) }
-                Hint { visible: win.s.dock; width: parent.width; wrapMode: Text.WordWrap; text: "Right-click an app in the dock to pin or unpin it." }
             }
 
             // Top bar --------------------------------------------------------------------------
