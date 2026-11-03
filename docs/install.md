@@ -8,14 +8,14 @@
 
 | Step | Choices |
 |---|---|
-| Kernel | `linux` (standard), `linux-zen` (desktop/gaming), `linux-lts` (long-term support) |
+| Kernel | `linux` (standard), `linux-zen` (desktop responsiveness), `linux-lts` (long-term support) |
 | Language & keyboard | Any locale and console keymap; the desktop uses the same layout |
 | Timezone | Detected automatically — press Enter to keep it |
 | Account | Computer name, username, password |
 | Disk | **Erase a disk**, or **install alongside** what's there using free space (keeps Windows) |
 | Filesystem | `btrfs` (with optional automatic snapshots via snapper) or `ext4` |
 | Encryption | Optional full-disk encryption (LUKS2) |
-| Extras | Bluetooth, printing, gaming (Steam), AUR helper (`yay`), Flatpak |
+| Extras | Bluetooth, printing, AUR helper (`yay`), Flatpak |
 
 The GPU driver (AMD, Intel or NVIDIA) and CPU microcode are picked for you. Nothing touches a
 disk until you confirm the summary — erasing a disk needs you to type `ERASE`.

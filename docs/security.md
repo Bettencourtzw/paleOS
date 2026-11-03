@@ -25,10 +25,10 @@ Open `http://neverssl.com` to reach them.
 - Temporary IPv6 addresses (your device isn't trackable by a fixed IPv6 address).
 - A different, stable MAC address for each Wi-Fi network.
 
-## Kernel hardening (light, game-safe)
+## Kernel hardening (light)
 
 Kernel addresses and logs are hidden from normal users, and network redirects are ignored.
-Nothing here affects games or anti-cheat. See `/etc/sysctl.d/99-paleos.conf`.
+Nothing here gets in the way of normal apps. See `/etc/sysctl.d/99-paleos.conf`.
 
 ## Also
 
