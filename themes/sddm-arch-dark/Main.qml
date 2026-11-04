@@ -64,7 +64,10 @@ Rectangle {
         orderOut = cells.map((c, i) => effect(b, c[0], c[1], i))
         t = 0
     }
-    Component.onCompleted: { newCycle(); pass.forceActiveFocus() }
+    Component.onCompleted: {
+        for (let i = 0; i < userModel.count; i++) if (userAt(i) === user) userIndex = i   // switching starts from the last user
+        newCycle(); pass.forceActiveFocus()
+    }
     Timer {
         interval: 33; running: true; repeat: true
         onTriggered: { root.t += 0.033; if (root.t > root.build + root.hold + root.fade + root.rest) root.newCycle() }

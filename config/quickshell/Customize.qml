@@ -100,13 +100,14 @@ FloatingWindow {
             Text { width: parent.width; elide: Text.ElideRight; text: card.item.about; color: Theme.dim; font.family: Theme.font; font.pixelSize: 10 } }
         MouseArea { id: hover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: win.set("background", card.item.name) }
     }
-    component Preview: Rectangle {   // live preview of what's selected
+    component Preview: Rectangle {   // live preview of what's selected (animates only on its own tab)
+        property int onTab: 0
         width: parent ? parent.width : 0; height: width * 9 / 16 * 0.55
         radius: 12; color: "black"; clip: true; border.color: Theme.border
         Image { anchors.fill: parent; anchors.margins: 1; visible: win.s.background === "static"
                 source: win.currentImage ? "file://" + win.currentImage : ""; fillMode: Image.PreserveAspectCrop; asynchronous: true; sourceSize.width: 1280 }
         BackgroundView { anchors.fill: parent; anchors.margins: 1; visible: win.s.background !== "static"
-                         name: win.open && win.s.background !== "static" ? win.s.background : ""; running: win.open }
+                         name: win.open && win.s.background !== "static" ? win.s.background : ""; running: win.open && win.tab === onTab }
     }
 
     // ---- sidebar ----------------------------------------------------------------------------
@@ -160,7 +161,7 @@ FloatingWindow {
             // Animation ------------------------------------------------------------------------
             Column { visible: win.tab === 1; width: parent.width; spacing: 16
                 Heading { text: "ANIMATED BACKGROUND"; value: win.s.background === "static" ? "using a wallpaper" : "" }
-                Preview {}
+                Preview { onTab: 1 }
                 Hint { text: "Frame rate" }
                 Choice { options: [15, 24, 30, 45, 60].map(f => ({ label: f + " fps", value: f })); current: win.s.bgFps; onPicked: v => win.set("bgFps", v) }
                 Setting { visible: win.s.background !== "static" && !win.s.background.startsWith("video:"); text: "Speed"; from: 0.25; to: 2; value: win.s.bgSpeed; shown: win.s.bgSpeed.toFixed(2) + "×"; onChanged: v => win.set("bgSpeed", Math.round(v * 20) / 20) }

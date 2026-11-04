@@ -5,6 +5,7 @@ import Quickshell.Bluetooth
 Panel {
     id: p
     readonly property var ad: Bluetooth.defaultAdapter
+    onOpenChanged: if (!open && ad && ad.discovering) ad.discovering = false   // scanning costs battery, can stutter audio
     readonly property var devs: ad ? ad.devices.values
         .filter(d => d.paired || d.connected || ad.discovering)
         .sort((a, b) => (b.connected - a.connected) || (b.paired - a.paired)) : []

@@ -19,14 +19,15 @@ Scope {
     // window positions: refresh on Hyprland events, and every 0.4 s for resizes and mouse moves (they send
     // no event), so a strip never sits where a window used to be
     readonly property var events: ["openwindow", "closewindow", "movewindowv2", "changefloatingmode", "fullscreen",
-                                   "workspacev2", "activewindowv2", "focusedmonv2", "windowtitlev2", "pin", "moveworkspacev2"]
+                                   "workspacev2", "activewindowv2", "focusedmonv2", "windowtitlev2", "pin", "moveworkspacev2", "activespecial", "configreloaded"]
     Connections {
         target: Hyprland
         enabled: root.on
         function onRawEvent(e) { if (root.events.includes(e.name)) refresh.restart() }
     }
-    Timer { id: refresh; interval: 40; onTriggered: Hyprland.refreshToplevels() }
-    Timer { interval: 400; repeat: true; running: root.on; onTriggered: Hyprland.refreshToplevels() }
+    Timer { id: refresh; interval: 40; onTriggered: root.refreshAll() }
+    Timer { interval: 400; repeat: true; running: root.on; onTriggered: root.refreshAll() }
+    function refreshAll() { Hyprland.refreshMonitors(); Hyprland.refreshToplevels() }   // monitors: bar size, scratchpad
     Component.onCompleted: { Hyprland.refreshMonitors(); Hyprland.refreshToplevels() }
 
     function act(dsp, address) { Hyprland.dispatch(`hl.dsp.${dsp.replace("$W", "address:" + address)}`) }
@@ -45,7 +46,7 @@ Scope {
             // `zone` = height of the free gap above the window, where its strip goes
             readonly property var boxes: {
                 const out = {}
-                if (!mi) return out
+                if (!mi || (mi.specialWorkspace && mi.specialWorkspace.name)) return out   // scratchpad open: no headers
                 const all = Hyprland.toplevels.values.map(t => t.lastIpcObject).filter(o => o && o.address && o.at && o.size
                     && o.mapped !== false && !o.hidden && o.workspace && o.workspace.id === wsId)
                 if (all.some(o => o.fullscreen > 0)) return out          // fullscreen app here: no headers at all
@@ -59,8 +60,8 @@ Scope {
                     let edge = top
                     for (const o of list) if (o !== b && over(o, b) && o.y < b.y && o.y + o.h > edge) edge = Math.min(b.y, o.y + o.h)
                     const zone = Math.min(24, b.y - edge)
-                    // a tiled window under a floating one: its strip would block clicks on the floating window
-                    const covered = !b.floating && list.some(f => f.floating && over(f, b) && b.y - zone < f.y + f.h && b.y + root.inside > f.y)
+                    // a window whose top edge is under a floating window: its strip would block clicks there
+                    const covered = list.some(f => f !== b && f.floating && over(f, b) && b.y - zone < f.y + f.h && b.y + root.inside > f.y)
                     if (!covered) out[b.address] = Object.assign(b, { zone: Math.max(0, zone) })
                 }
                 return out

@@ -57,7 +57,8 @@ Rectangle {
                     readonly property real wave: Math.sin(u * 5 + root.t * 0.18 + curtain.index * 2) * 0.5 + Math.sin(u * 11 - root.t * 0.11) * 0.25
                     tint: curtain.index ? "#d4e2ef" : "#e9ecef"
                     strength: 0.11
-                    width: root.fw * 0.16; height: root.height * (0.45 + 0.15 * Math.sin(u * 7 + root.t * 0.3))
+                    width: root.fw * 0.16; height: root.height * 0.6        // fixed size: drawn once, stretched below
+                    transform: Scale { yScale: (0.45 + 0.15 * Math.sin(u * 7 + root.t * 0.3)) / 0.6 }
                     x: u * root.width * 1.15 - root.width * 0.12
                     y: root.height * (0.08 + curtain.index * 0.1) + wave * root.height * 0.08
                     opacity: 0.45 + 0.55 * Math.sin(u * 3.5 + root.t * (0.35 + curtain.index * 0.12))

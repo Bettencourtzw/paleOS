@@ -200,7 +200,7 @@ Scope {
                             visible: tile.entry !== null; anchors.fill: parent
                             source: tile.entry ? Quickshell.iconPath(tile.entry.icon, "application-x-executable") : ""
                             sourceSize.width: bar.icon * 2; sourceSize.height: bar.icon * 2
-                            smooth: true; mipmap: true; asynchronous: true
+                            smooth: true; mipmap: true      // not asynchronous: SVG icons rendered off-thread crashed the shell
                         }
                         Text {
                             visible: tile.entry === null; anchors.centerIn: parent

@@ -28,10 +28,15 @@ Panel {
     Process { id: nl; command: ["pgrep", "-x", "hyprsunset"]; onExited: code => p.night = code === 0 }
     Process { id: apply; onExited: code => {
         if (code !== 0) Quickshell.execDetached(["notify-send", "Display settings", "Could not update the monitor settings. Check monitors.lua."])
-        settle.restart()
+        if (p.queued.length) { const next = p.queued; p.queued = []; Qt.callLater(() => { apply.command = next; apply.running = true }) } else settle.restart()
     } }
+    property var queued: []
+    function run(args) {             // a change made while another is still applying waits for it
+        if (apply.running) { queued = [p.tool].concat(args); return }
+        apply.command = [p.tool].concat(args); apply.running = true
+    }
     Timer { id: settle; interval: 600; onTriggered: p.refresh() }
-    function setMode(resolution, hz) { apply.command = [p.tool, "set", "mode", resolution + "@" + hz]; apply.running = true }
+    function setMode(resolution, hz) { p.run(["set", "mode", resolution + "@" + hz]) }
 
     Heading { text: "RESOLUTION" }
     Dropdown {
@@ -57,7 +62,7 @@ Panel {
     property real dragPos: -1             // handle position while dragging (follows the mouse, not the snap)
     function scalePos(v) { return maxScale > minScale ? (v - minScale) / (maxScale - minScale) : 0 }
     function applyScaleNow() {
-        if (p.mon && Math.abs(p.pending - p.mon.scale) > 0.001) { apply.command = [p.tool, "set", "scale", String(p.pending)]; apply.running = true }
+        if (p.mon && Math.abs(p.pending - p.mon.scale) > 0.001) p.run(["set", "scale", String(p.pending)])
     }
     Timer { id: applyScale; interval: 600; onTriggered: p.applyScaleNow() }
     Heading { text: "SCALE"; value: (+p.pending.toFixed(2)) + "x" }
@@ -68,7 +73,8 @@ Panel {
                 p.dragPos = v
                 p.pending = p.nearest(p.minScale + v * (p.maxScale - p.minScale))
             } else {                   // scroll wheel: one supported scale per notch, applied after a short pause
-                const i = p.scales.indexOf(p.nearest(p.pending)) + (v > p.scalePos(p.pending) ? 1 : -1)
+                const pos = p.scalePos(p.pending), dir = v > pos + 0.001 ? 1 : v < pos - 0.001 ? -1 : 0
+                const i = p.scales.indexOf(p.nearest(p.pending)) + dir
                 p.pending = p.scales[Math.max(0, Math.min(p.scales.length - 1, i))]
                 applyScale.restart()
             }
@@ -81,13 +87,13 @@ Panel {
     Switcher {
         text: "HDR (always on)"
         checked: p.mon ? p.mon.hdr : false
-        onToggled: { apply.command = [p.tool, "set", "hdr", p.mon && p.mon.hdr ? "off" : "on"]; apply.running = true }
+        onToggled: p.run(["set", "hdr", p.mon && p.mon.hdr ? "off" : "on"])
     }
     // brightness of normal (non-HDR) content while HDR is on, applied when you let go
     property int sdrPending: 250
     onMonChanged: if (mon && mon.sdr) sdrPending = mon.sdr
     Timer { id: applySdr; interval: 450
-        onTriggered: if (p.mon && p.sdrPending !== p.mon.sdr) { apply.command = [p.tool, "set", "sdr", String(p.sdrPending)]; apply.running = true } }
+        onTriggered: if (p.mon && p.sdrPending !== p.mon.sdr) p.run(["set", "sdr", String(p.sdrPending)]) }
     Heading { visible: p.mon && p.mon.hdr; text: "SDR BRIGHTNESS"; value: p.sdrPending + " nits" }
     Level {
         visible: p.mon && p.mon.hdr
