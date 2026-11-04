@@ -45,7 +45,10 @@ sed -i -E "s/^#? *deny *=.*/deny = 10/" /etc/security/faillock.conf
 systemctl enable bluetooth power-profiles-daemon
 [[ -n $user ]] && usermod -aG gamemode "$user"
 
-# 5. login screen + boot splash
+# 5. NVIDIA: driver, early KMS, sleep/wake (only on PCs with an NVIDIA GPU)
+bash install/nvidia.sh
+
+# 6. login screen + boot splash
 if ask "Install the paleOS login screen and boot splash?" y; then
   install -d /usr/share/sddm/themes/arch-dark /usr/share/plymouth/themes/arch-dark /etc/sddm.conf.d
   install -m644 themes/sddm-arch-dark/* /usr/share/sddm/themes/arch-dark/
@@ -65,7 +68,7 @@ if ask "Install the paleOS login screen and boot splash?" y; then
   [[ -f /etc/default/grub && -d /boot/grub ]] && grub-mkconfig -o /boot/grub/grub.cfg >/dev/null 2>&1 || true
 fi
 
-# 6. optional: AMD GPU tuning
+# 7. optional: AMD GPU tuning
 if lspci | grep -qiE '(VGA|3D|Display).*AMD' && ask "AMD GPU found. Install LACT for GPU tuning (power, clocks, fans)?" n; then
   pacman -S --needed --noconfirm lact && systemctl enable lactd
 fi

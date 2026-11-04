@@ -46,6 +46,9 @@ What it does — and doesn't do:
 - **Doesn't force an update.** It asks; the default is no. It only insists if your Hyprland is too old for the config (0.57+).
 - **Backs up** any config it replaces to `~/.config/paleos-backup-<date>` (moved, not merged).
 - **Keeps your choices** on re-runs: monitor settings and wallpaper stay as you left them.
+- **Sets up NVIDIA graphics** if it finds an NVIDIA card (GTX 16 / RTX 20 series or newer): installs the
+  driver if you don't have one, loads it at boot (so the boot splash and login screen show on it) and
+  turns on its sleep/wake services. Older NVIDIA cards need the legacy driver from the AUR; it tells you.
 - Asks before installing the login screen + boot splash, and before AMD GPU tuning (LACT).
 
 Reboot when it's done.

@@ -18,7 +18,7 @@ paleOS is small on purpose: standard Arch packages, configured with plain files.
 | Screensaver | Quickshell overlay (`Screensaver.qml`) | `config/quickshell/` |
 | Login screen | SDDM theme (QML) | `themes/sddm-arch-dark/` |
 | Boot splash | Plymouth script theme | `themes/plymouth-arch-dark/` |
-| Installer (existing Arch) | `install.sh` → `install/system.sh` (root) + `install/user.sh` (you) | `install/` |
+| Installer (existing Arch) | `install.sh` → `install/system.sh` (root, runs `install/nvidia.sh`) + `install/user.sh` (you) | `install/` |
 | ISO installer | archiso + `paleos-setup` (gum) | `iso/` |
 
 ## Why Rust for the app index
@@ -34,4 +34,5 @@ terminal only redraws what changed, so a rewrite wouldn't be noticeable.
 ## Services
 
 `waybar` and `paleos-shell` (Quickshell) run as systemd user services so they restart if they
-crash. mako, swayosd, hyprpaper and hypridle are started by Hyprland at login.
+crash. `paleos-hypr-reload.path` reloads Hyprland when `monitors.lua` or `bindings.lua` is saved
+(Hyprland itself only watches `hyprland.lua`). mako, swayosd, hyprpaper and hypridle are started by Hyprland at login.
