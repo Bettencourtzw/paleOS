@@ -38,9 +38,15 @@ Rectangle {
                 const edge = !on(x + s, y) || !on(x - s, y) || !on(x, y + s) || !on(x, y - s)
                 raw.push([x, y, edge]); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y)
             }
-            const w = Math.max(1, x1 - x0), h = Math.max(1, y1 - y0)
-            points = raw.map(p => ({ x: (p[0] - x0) / w, y: (p[1] - y0) / h, edge: p[2] }))
-            aspect = w / h
+            // centre on the logo's own axis (the middle of each row), not its bounding box: a stray pixel at
+            // one tip would otherwise push the whole logo sideways, off the centre of the screen and clock
+            const rows = {}
+            for (const p of raw) { const r = rows[p[1]] || (rows[p[1]] = [p[0], p[0]]); r[0] = Math.min(r[0], p[0]); r[1] = Math.max(r[1], p[0]) }
+            const mids = Object.values(rows).map(r => (r[0] + r[1]) / 2).sort((a, b) => a - b)
+            const axis = mids.length ? mids[Math.floor(mids.length / 2)] : 130
+            const half = Math.max(1, ...raw.map(p => Math.abs(p[0] - axis))), h = Math.max(1, y1 - y0)
+            points = raw.map(p => ({ x: (p[0] - axis + half) / (2 * half), y: (p[1] - y0) / h, edge: p[2] }))
+            aspect = 2 * half / h
         }
         property real aspect: 1
     }
