@@ -6,12 +6,14 @@ import Quickshell.Widgets
 
 // Window headers: point at the top edge of a window and a slim header slides in with its title and
 // float / fullscreen / close buttons. Never on fullscreen windows (games). Customize → Windows.
-// Each window gets its own small surface: a 10 px strip in the gap above it (so it never blocks the
+// Each window gets its own small surface: a thin strip in the gap above it (so it never blocks the
 // app), which grows into the header while you point at it.
 Scope {
     id: root
     readonly property var s: Settings.data
     readonly property bool on: s.windowHeaders
+    readonly property int trig: s.headerTrigger || 8
+    readonly property int hh: s.headerHeight || 32
 
     // window positions: refresh on Hyprland events, and every 1.5 s for resizes (they send no event)
     readonly property var events: ["openwindow", "closewindow", "movewindowv2", "changefloatingmode", "fullscreen",
@@ -49,7 +51,7 @@ Scope {
                 // skip a tiled window whose strip would sit on top of a floating window (it would block clicks there)
                 const floats = list.filter(b => b.floating)
                 for (const b of list)
-                    if (b.floating || !floats.some(f => b.y - 8 < f.y + f.h && b.y + 2 > f.y && b.x < f.x + f.w && b.x + b.w > f.x))
+                    if (b.floating || !floats.some(f => b.y - root.trig < f.y + f.h && b.y + 2 > f.y && b.x < f.x + f.w && b.x + b.w > f.x))
                         out[b.address] = b
                 return out
             }
@@ -69,16 +71,16 @@ Scope {
                     screen: perScreen.modelData
                     visible: b !== null
                     anchors { top: true; left: true }
-                    margins { left: b ? b.x : 0; top: b ? Math.max(0, b.y - 8) : 0 }
+                    margins { left: b ? b.x : 0; top: b ? Math.max(0, b.y - root.trig) : 0 }
                     implicitWidth: b ? b.w : 1
-                    implicitHeight: open ? 42 : 10
+                    implicitHeight: open ? root.trig + root.hh + 2 : root.trig + 2
                     color: "transparent"
                     exclusionMode: ExclusionMode.Ignore
                     WlrLayershell.layer: WlrLayer.Top
                     WlrLayershell.namespace: "paleos-header"
                     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
-                    Timer { id: hide; interval: 350; onTriggered: if (!area.containsMouse && perScreen.shown === strip.modelData) perScreen.shown = "" }
+                    Timer { id: hide; interval: root.s.headerDelay || 350; onTriggered: if (!area.containsMouse && perScreen.shown === strip.modelData) perScreen.shown = "" }
                     MouseArea {
                         id: area
                         anchors.fill: parent
@@ -91,12 +93,12 @@ Scope {
 
                     Rectangle {
                         id: header
-                        y: 8; width: parent.width; height: 32
+                        y: root.trig; width: parent.width; height: root.hh
                         opacity: strip.open ? 1 : 0
                         visible: opacity > 0
                         Behavior on opacity { NumberAnimation { duration: 140 } }
                         topLeftRadius: root.s.rounding; topRightRadius: root.s.rounding
-                        color: Qt.rgba(0.055, 0.055, 0.055, 0.94)
+                        color: Qt.rgba(0.055, 0.055, 0.055, root.s.headerOpacity || 0.94)
                         border.color: Theme.border
 
                         IconImage {
@@ -118,11 +120,11 @@ Scope {
                             anchors.right: parent.right; anchors.rightMargin: 6
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 2
-                            HeaderButton { glyph: strip.b && strip.b.floating ? 0xF0570 : 0xF05B2     // tile : float
+                            HeaderButton { visible: !root.s.headerHideFloat; glyph: strip.b && strip.b.floating ? 0xF0570 : 0xF05B2     // tile : float
                                            onClicked: root.act(`float({ action = "toggle", window = "$W" })`, strip.modelData) }
-                            HeaderButton { glyph: 0xF0293                                                 // fullscreen
+                            HeaderButton { visible: !root.s.headerHideFullscreen; glyph: 0xF0293                     // fullscreen
                                            onClicked: { const a = strip.modelData; perScreen.shown = ""; root.act(`fullscreen({ mode = "fullscreen", window = "$W" })`, a) } }
-                            HeaderButton { glyph: 0xF0156; danger: true                                  // close
+                            HeaderButton { visible: !root.s.headerHideClose; glyph: 0xF0156; danger: true            // close
                                            onClicked: { const a = strip.modelData; perScreen.shown = ""; root.act(`close({ window = "$W" })`, a) } }
                         }
                     }

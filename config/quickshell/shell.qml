@@ -38,6 +38,6 @@ ShellRoot {
         target: "customize"
         function open(): void { customize.open = true }
         function toggle(): void { customize.open = !customize.open }
-        function page(n: int): void { customize.tab = n; customize.open = true }   // 0 background · 1 animation · 2 windows · 3 bar
+        function page(n: int): void { customize.tab = n; customize.open = true }   // 0 background · 1 animation · 2 windows · 3 bar · 4 dock · 5 window header
     }
 }

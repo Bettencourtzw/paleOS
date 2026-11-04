@@ -42,6 +42,14 @@ Singleton {
             property bool blur: true
             property bool animations: true
             property bool windowHeaders: true     // header with buttons when pointing at a window's top edge
+            property int headerHeight: 32         // 24 … 44
+            property real headerOpacity: 0.94     // 0.3 … 1
+            property int headerDelay: 350         // ms it stays after the pointer leaves, 100 … 1500
+            property int headerTrigger: 8         // px of the hover area above the window, 4 … 16
+            // buttons, stored as "hide" so a settings file from before these options shows them all
+            property bool headerHideFloat: false
+            property bool headerHideFullscreen: false
+            property bool headerHideClose: false
             // power (edited in Power settings)
             property int screensaverMinutes: 5
             property int lockMinutes: 10

@@ -120,7 +120,7 @@ FloatingWindow {
                 Text { text: Theme.icon(0xF03D8); color: Theme.fg; font.family: Theme.font; font.pixelSize: 24 }
                 Text { text: "Customize"; color: Theme.fg; font.family: Theme.font; font.pixelSize: 17; font.bold: true; anchors.verticalCenter: parent.verticalCenter } }
             Repeater {
-                model: [ { g: 0xF02E9, t: "Background" }, { g: 0xF0E7B, t: "Animation" }, { g: 0xF05B2, t: "Windows" }, { g: 0xF06DF, t: "Top bar" }, { g: 0xF0E7A, t: "Dock" } ]
+                model: [ { g: 0xF02E9, t: "Background" }, { g: 0xF0E7B, t: "Animation" }, { g: 0xF05B2, t: "Windows" }, { g: 0xF06DF, t: "Top bar" }, { g: 0xF0E7A, t: "Dock" }, { g: 0xF05AF, t: "Window header" } ]
                 delegate: Entry { required property var modelData; required property int index
                                   glyph: modelData.g; text: modelData.t; active: win.tab === index; onClicked: win.tab = index }
             }
@@ -179,7 +179,6 @@ FloatingWindow {
                 Setting { text: "Rounded corners"; from: 0; to: 20; value: win.s.rounding; shown: win.s.rounding + " px"; onChanged: v => win.set("rounding", Math.round(v)) }
                 Switcher { text: "Blur behind see-through windows"; checked: win.s.blur; onToggled: win.set("blur", !win.s.blur) }
                 Switcher { text: "Animations"; checked: win.s.animations; onToggled: win.set("animations", !win.s.animations) }
-                Switcher { text: "Window header when pointing at the top edge"; checked: win.s.windowHeaders; onToggled: win.set("windowHeaders", !win.s.windowHeaders) }
             }
 
             // Dock -----------------------------------------------------------------------------
@@ -193,6 +192,20 @@ FloatingWindow {
                 Setting { visible: win.s.dock; text: "Space between icons"; from: 0; to: 20; value: win.s.dockSpacing; shown: win.s.dockSpacing + " px"; onChanged: v => win.set("dockSpacing", Math.round(v)) }
                 Setting { visible: win.s.dock; text: "Distance from the bottom"; from: 0; to: 40; value: win.s.dockMargin; shown: win.s.dockMargin + " px"; onChanged: v => win.set("dockMargin", Math.round(v)) }
                 Switcher { visible: win.s.dock; text: "Dots under open apps"; checked: win.s.dockDots; onToggled: win.set("dockDots", !win.s.dockDots) }
+            }
+
+            // Window header -------------------------------------------------------------------
+            Column { visible: win.tab === 5; width: parent.width; spacing: 16
+                Heading { text: "WINDOW HEADER" }
+                Switcher { text: "Show window headers"; checked: win.s.windowHeaders; onToggled: win.set("windowHeaders", !win.s.windowHeaders) }
+                Setting { visible: win.s.windowHeaders; text: "Height"; from: 24; to: 44; value: win.s.headerHeight || 32; shown: (win.s.headerHeight || 32) + " px"; onChanged: v => win.set("headerHeight", Math.round(v / 2) * 2) }
+                Setting { visible: win.s.windowHeaders; text: "Background opacity"; from: 0.3; to: 1; value: win.s.headerOpacity || 0.94; shown: Math.round((win.s.headerOpacity || 0.94) * 100) + "%"; onChanged: v => win.set("headerOpacity", Math.round(v * 20) / 20) }
+                Setting { visible: win.s.windowHeaders; text: "Stays after the pointer leaves"; from: 100; to: 1500; value: win.s.headerDelay || 350; shown: ((win.s.headerDelay || 350) / 1000).toFixed(2) + " s"; onChanged: v => win.set("headerDelay", Math.round(v / 50) * 50) }
+                Setting { visible: win.s.windowHeaders; text: "Hover area above the window"; from: 4; to: 16; value: win.s.headerTrigger || 8; shown: (win.s.headerTrigger || 8) + " px"; onChanged: v => win.set("headerTrigger", Math.round(v)) }
+                Hint { visible: win.s.windowHeaders; text: "Buttons" }
+                Switcher { visible: win.s.windowHeaders; text: "Float / tile"; checked: !win.s.headerHideFloat; onToggled: win.set("headerHideFloat", !win.s.headerHideFloat) }
+                Switcher { visible: win.s.windowHeaders; text: "Fullscreen"; checked: !win.s.headerHideFullscreen; onToggled: win.set("headerHideFullscreen", !win.s.headerHideFullscreen) }
+                Switcher { visible: win.s.windowHeaders; text: "Close"; checked: !win.s.headerHideClose; onToggled: win.set("headerHideClose", !win.s.headerHideClose) }
             }
 
             // Top bar --------------------------------------------------------------------------
