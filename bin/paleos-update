@@ -39,6 +39,6 @@ PALEOS_KEYMAP=${km:-us} bash "$dir/install/user.sh"
 hyprctl reload >/dev/null 2>&1 || true
 makoctl reload >/dev/null 2>&1 || true
 systemctl --user daemon-reload
-systemctl --user restart waybar paleos-shell 2>/dev/null || true
+systemctl --user restart waybar paleos-shell paleos-hypr-reload.path 2>/dev/null || true
 notify-send -u low "paleOS updated" 2>/dev/null || true
 echo "paleOS updated."

@@ -15,8 +15,8 @@ For everything else, it's a plain text file in your home folder. Most changes ap
 | Menu look | `~/.config/rofi/theme.rasi` |
 | Menu entries | `~/.local/bin/menu` — add a `row icon "Label"` line and a matching `case` line |
 | Panel colors | `~/.config/quickshell/Theme.qml` |
-| Keybindings | `~/.config/hypr/bindings.lua` |
-| Monitors | `~/.config/hypr/monitors.lua` (also: Display panel or Display menu) |
+| Keybindings | `~/.config/hypr/bindings.lua` — saving applies it right away |
+| Monitors | Display panel, or `~/.config/hypr/monitors.lua` — saving the file applies it right away. Monitors not listed get their highest resolution at 60 Hz (or the closest rate they support) |
 | Window rules, gaps, animations | `~/.config/hypr/hyprland.lua` |
 | Dock | Customize → Dock; pinned apps are in `~/.config/paleos/settings.json` (`dockPinned`) |
 | Window header | Customize → Window header: on/off, height, opacity, how long it stays, hover area, which buttons. Point at the gap above a window to show it |

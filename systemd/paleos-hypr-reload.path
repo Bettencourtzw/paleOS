@@ -1,0 +1,12 @@
+[Unit]
+Description=paleOS: apply monitors.lua and bindings.lua as soon as they are saved
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Path]
+# Hyprland only watches hyprland.lua itself, not the files it loads
+PathChanged=%h/.config/hypr/monitors.lua
+PathChanged=%h/.config/hypr/bindings.lua
+
+[Install]
+WantedBy=graphical-session.target

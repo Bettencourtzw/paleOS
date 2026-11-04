@@ -36,9 +36,10 @@ sed -i "s|kb_layout = \"us\",|kb_layout = \"$km\",|" "$C/hypr/hyprland.lua"
 # 4. user services (symlinks, so this also works inside the ISO installer's chroot)
 U=$C/systemd/user; W=$U/graphical-session.target.wants
 mkdir -p "$W" "$U/waybar.service.d"
-cp systemd/paleos-shell.service "$U/"
+cp systemd/paleos-shell.service systemd/paleos-hypr-reload.path systemd/paleos-hypr-reload.service "$U/"
 printf '[Service]\nRestart=always\nRestartSec=1\n' > "$U/waybar.service.d/restart.conf"
 ln -sf ../paleos-shell.service "$W/paleos-shell.service"
+ln -sf ../paleos-hypr-reload.path "$W/paleos-hypr-reload.path"
 ln -sf /usr/lib/systemd/user/waybar.service "$W/waybar.service"
 rm -f "$W/hyprpolkitagent.service"
 echo "paleOS user part done."

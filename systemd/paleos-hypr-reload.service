@@ -1,0 +1,6 @@
+[Unit]
+Description=paleOS: reload Hyprland after a config file was saved
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/hyprctl reload
