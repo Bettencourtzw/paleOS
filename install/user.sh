@@ -39,6 +39,10 @@ sed -i "s|kb_layout = \"us\",|kb_layout = \"$km\",|" "$C/hypr/hyprland.lua"
 mkdir -p "$C/autostart"
 for a in nm-applet blueman; do printf '[Desktop Entry]\nType=Application\nName=%s\nHidden=true\n' "$a" > "$C/autostart/$a.desktop"; done
 
+# apps that run in a terminal (Neovim, btop…) opened from "Open with": the terminal they open in.
+# foot unless you chose another one (one .desktop name per line, first match wins)
+[[ -e $C/xdg-terminals.list ]] || echo foot.desktop > "$C/xdg-terminals.list"
+
 # 5. user services (symlinks, so this also works inside the ISO installer's chroot)
 U=$C/systemd/user; W=$U/graphical-session.target.wants
 mkdir -p "$W" "$U/waybar.service.d" "$U/hypridle.service.d"

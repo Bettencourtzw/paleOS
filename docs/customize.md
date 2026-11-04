@@ -16,6 +16,7 @@ For everything else, it's a plain text file in your home folder. Most changes ap
 | Menu entries | `~/.local/bin/menu` — add a `row icon "Label"` line and a matching `case` line |
 | Panel colors | `~/.config/quickshell/Theme.qml` |
 | Keybindings | `~/.config/hypr/bindings.lua` — saving applies it right away |
+| Terminal for apps opened from "Open with" (Neovim, btop…) | `~/.config/xdg-terminals.list` — `foot.desktop` by default; put e.g. `kitty.desktop` there instead |
 | Monitors | Display panel, or `~/.config/hypr/monitors.lua` — saving the file applies it right away. A new monitor starts at its highest resolution at 60 Hz (or the closest rate it supports), saved there so you can change it |
 | Window rules, gaps, animations | `~/.config/hypr/hyprland.lua` |
 | Dock | Customize → Dock; pinned apps are in `~/.config/paleos/settings.json` (`dockPinned`) |

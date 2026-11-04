@@ -2,7 +2,7 @@
 
 # Desktop
 hyprland hyprlock hypridle hyprpaper hyprpicker hyprsunset xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
-waybar quickshell qt6-multimedia qt6-multimedia-ffmpeg rofi rofi-calc rofi-emoji mako swayosd foot nautilus
+waybar quickshell qt6-multimedia qt6-multimedia-ffmpeg rofi rofi-calc rofi-emoji mako swayosd foot xdg-terminal-exec nautilus
 
 # Tools used by the menu, screenshots and panels
 grim slurp satty wl-clipboard playerctl brightnessctl libnotify jq python neovim fzf btop xdg-utils pciutils gtk3
