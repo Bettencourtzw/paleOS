@@ -34,7 +34,11 @@ o.bind("SUPER + CTRL + T", "Activity", tui("btop"))
 
 ---- WINDOWS ------------------------------------------------------------------
 o.bind("SUPER + W", "Close window", hl.dsp.window.close())
-o.bind("SUPER + J", "Toggle window split (stacked / side by side)", hl.dsp.layout("togglesplit"))
+o.bind("SUPER + J", "Toggle window split (stacked / side by side)", function()
+  -- togglesplit only exists in the tiling layout; in master the main window moves between left and top
+  local master = hl.get_config("general.layout") == "master"
+  hl.dispatch(hl.dsp.layout(master and "orientationcycle left top" or "togglesplit"))
+end)
 o.bind("SUPER + L", "Switch layout (tiling / master)", function()
   local now = hl.get_config("general.layout")
   hl.config({ general = { layout = now == "master" and "dwindle" or "master" } })
