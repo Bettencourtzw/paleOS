@@ -35,7 +35,11 @@ case $km in uk) km=gb ;; sv) km=se ;; sg) km=ch ;; cf) km=ca ;; la) km=latam ;; 
 km=${km:-us}
 sed -i "s|kb_layout = \"us\",|kb_layout = \"$km\",|" "$C/hypr/hyprland.lua"
 
-# 4. user services (symlinks, so this also works inside the ISO installer's chroot)
+# 4. tray applets that duplicate paleOS's own panels (network, Bluetooth): keep them from autostarting
+mkdir -p "$C/autostart"
+for a in nm-applet blueman; do printf '[Desktop Entry]\nType=Application\nName=%s\nHidden=true\n' "$a" > "$C/autostart/$a.desktop"; done
+
+# 5. user services (symlinks, so this also works inside the ISO installer's chroot)
 U=$C/systemd/user; W=$U/graphical-session.target.wants
 mkdir -p "$W" "$U/waybar.service.d" "$U/hypridle.service.d"
 cp systemd/paleos-shell.service systemd/paleos-hypr-reload.path systemd/paleos-hypr-reload.service "$U/"
