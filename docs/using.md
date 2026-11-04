@@ -30,6 +30,17 @@ Sound, network, Bluetooth and display live in the top bar; `SUPER + K` lists eve
 GitHub and shows what's new first. Your settings, monitors, wallpaper and keyboard layout are kept;
 replaced config folders are saved in `~/.config/paleos-backup-<date>`.
 
+### How paleOS updates reach every PC
+
+Every change to paleOS is pushed to the `main` branch on GitHub, from whichever PC (or person)
+made it. Nothing is pushed to your computer automatically: when you want the latest version, open
+**SUPER + SPACE → Update → paleOS**. It shows what changed since your last update, asks once, and
+then applies it, so every PC that runs it ends up on the same paleOS.
+
+Working on paleOS yourself: edit a clone of the repo (for example `~/Documents/claude/paleOS`),
+`git pull` before you start and `git push` to `main` when you're done. Don't edit
+`~/.local/share/paleOS`: that is the installed copy, and Update → paleOS resets it to GitHub.
+
 Installing Steam enables multilib and offers a full system upgrade, as required when refreshing
 Arch package databases. Review pacman's changes before confirming.
 

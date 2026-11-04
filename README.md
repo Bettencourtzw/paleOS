@@ -49,6 +49,11 @@ curl -fsSL https://raw.githubusercontent.com/Bettencourtzw/paleOS/main/boot.sh |
 
 It never forces a system update, and it backs up anything it replaces.
 
+## Staying up to date
+
+Every paleOS change lands on `main`. To get it on any PC: **SUPER + SPACE → Update → paleOS**.
+Arch packages update separately with **Update → System**.
+
 ## Learn more
 
 | | |
