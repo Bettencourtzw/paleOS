@@ -39,6 +39,10 @@ o.bind("SUPER + J", "Toggle window split (stacked / side by side)", function()
   local master = hl.get_config("general.layout") == "master"
   hl.dispatch(hl.dsp.layout(master and "orientationcycle left top" or "togglesplit"))
 end)
+o.bind("SUPER + SHIFT + J", "Flip sides (big window left / right)", function()
+  local master = hl.get_config("general.layout") == "master"
+  hl.dispatch(hl.dsp.layout(master and "orientationcycle left right" or "swapsplit"))
+end)
 o.bind("SUPER + L", "Switch layout (tiling / master)", function()
   local now = hl.get_config("general.layout")
   hl.config({ general = { layout = now == "master" and "dwindle" or "master" } })
