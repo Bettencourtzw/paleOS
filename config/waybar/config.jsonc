@@ -29,7 +29,7 @@
   "hyprland/workspaces": {
     "on-click": "activate",
     "format": "{name}",
-    "persistent-workspaces": { "*": 4 },
+    "persistent-workspaces": { "1": [], "2": [], "3": [], "4": [] },   // 1-4 always shown, on any monitor
     "sort-by-number": true
   },
 
