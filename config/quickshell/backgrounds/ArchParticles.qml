@@ -10,6 +10,8 @@ Rectangle {
     property real detail: 1
     property real t: 20
     Timer { interval: Math.round(1000 / Math.max(5, root.fps)); repeat: true; running: root.running; onTriggered: root.t += root.speed * interval / 1000 }
+    // Sizes follow the largest 16:9 area that fits (fh = its height), so the logo stays whole on ultrawide or portrait screens
+    readonly property real fh: Math.min(height, width * 9 / 16)
     color: "#000000"
     // Samples the real Arch logo glyph into points (x, y in 0..1, edge = on the outline).
     component LogoSampler: Canvas {
@@ -22,8 +24,15 @@ Rectangle {
             g.fillStyle = "white"; g.textAlign = "center"; g.textBaseline = "middle"
             g.font = "230px \"JetBrainsMono Nerd Font\""
             g.fillText(String.fromCodePoint(0xF08C7), 130, 130)
-            const d = g.getImageData(0, 0, 260, 260).data, s = step
-            const on = (x, y) => x >= 0 && y >= 0 && x < 260 && y < 260 && d[(y * 260 + x) * 4 + 3] > 120
+            // On a scaled monitor the canvas has more real pixels than 260 x 260 (325 x 325 at 1.25), and neither
+            // Screen.devicePixelRatio nor getImageData says how many. So: mark the bottom-right corner, read a
+            // generous area and find the mark; k = real pixels per canvas pixel.
+            g.fillRect(259, 259, 1, 1)
+            const img = g.getImageData(0, 0, 1040, 1040), d = img.data, iw = img.width
+            let c = Math.min(iw, img.height) - 1
+            while (c > 0 && d[(c * iw + c) * 4 + 3] === 0) c--
+            const k = (c + 1) / 260, s = step
+            const on = (x, y) => x >= 0 && y >= 0 && x < 260 && y < 260 && d[(Math.floor(y * k) * iw + Math.floor(x * k)) * 4 + 3] > 120
             const raw = []; let x0 = 260, x1 = 0, y0 = 260, y1 = 0
             for (let y = 0; y < 260; y += s) for (let x = 0; x < 260; x += s) if (on(x, y)) {
                 const edge = !on(x + s, y) || !on(x - s, y) || !on(x, y + s) || !on(x, y - s)
@@ -40,7 +49,7 @@ Rectangle {
     readonly property var pts: logo.points
     readonly property real cycle: 16                        // in 5s · hold 6s · out 4s · rest 1s
     readonly property real ph: t % cycle
-    readonly property real logoH: height * 0.52
+    readonly property real logoH: fh * 0.52
     readonly property real logoW: logoH * logo.aspect
     readonly property real cx: width / 2
     readonly property real cy: height / 2 - height * 0.02
@@ -66,7 +75,7 @@ Rectangle {
         }
     }
     Glow {   // soft light behind the logo while it's formed
-        anchors.centerIn: parent; width: parent.height * 1.1; height: width; strength: 0.05; opacity: root.k
+        anchors.centerIn: parent; width: root.fh * 1.1; height: width; strength: 0.05; opacity: root.k
     }
     Repeater {
         model: root.pts.length

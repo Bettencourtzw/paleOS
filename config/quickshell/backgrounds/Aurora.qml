@@ -9,6 +9,11 @@ Rectangle {
     property real detail: 1
     property real t: 20
     Timer { interval: Math.round(1000 / Math.max(5, root.fps)); repeat: true; running: root.running; onTriggered: root.t += root.speed * interval / 1000 }
+    // Sizes follow the largest 16:9 area that fits (fh = its height, fw = its width), so nothing stretches
+    // or runs off an ultrawide or portrait screen; `more` = how much extra screen there is around it.
+    readonly property real fh: Math.min(height, width * 9 / 16)
+    readonly property real fw: fh * 16 / 9
+    readonly property real more: fh > 0 ? Math.min(4, width * height / (fw * fh)) : 1   // capped: sizes are odd while the window opens
     gradient: Gradient { GradientStop { position: 0; color: "#05070b" } GradientStop { position: 0.6; color: "#030406" } GradientStop { position: 1; color: "#010101" } }
     component Glow: Canvas {   // soft round glow, drawn once; moving/fading it later is free
         property color tint: "#ffffff"
@@ -29,7 +34,7 @@ Rectangle {
     }
 
     Repeater {   // a few stars
-        model: Math.round(60 * root.detail)
+        model: Math.round(60 * root.detail * root.more)
         delegate: Rectangle {
             readonly property real a: Math.random()
             readonly property real b: Math.random()
@@ -43,7 +48,7 @@ Rectangle {
             id: curtain
             required property int index
             anchors.fill: parent
-            readonly property int n: Math.round(28 * root.detail)
+            readonly property int n: Math.round(28 * root.detail * (root.fw > 0 ? Math.min(4, root.width / root.fw) : 1))
             Repeater {
                 model: curtain.n
                 delegate: Glow {
@@ -52,7 +57,7 @@ Rectangle {
                     readonly property real wave: Math.sin(u * 5 + root.t * 0.18 + curtain.index * 2) * 0.5 + Math.sin(u * 11 - root.t * 0.11) * 0.25
                     tint: curtain.index ? "#d4e2ef" : "#e9ecef"
                     strength: 0.11
-                    width: root.width * 0.16; height: root.height * (0.45 + 0.15 * Math.sin(u * 7 + root.t * 0.3))
+                    width: root.fw * 0.16; height: root.height * (0.45 + 0.15 * Math.sin(u * 7 + root.t * 0.3))
                     x: u * root.width * 1.15 - root.width * 0.12
                     y: root.height * (0.08 + curtain.index * 0.1) + wave * root.height * 0.08
                     opacity: 0.45 + 0.55 * Math.sin(u * 3.5 + root.t * (0.35 + curtain.index * 0.12))

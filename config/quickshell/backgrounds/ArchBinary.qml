@@ -10,6 +10,11 @@ Rectangle {
     property real detail: 1
     property real t: 20
     Timer { interval: Math.round(1000 / Math.max(5, root.fps)); repeat: true; running: root.running; onTriggered: root.t += root.speed * interval / 1000 }
+    // Sizes follow the largest 16:9 area that fits (fh = its height, fw = its width), so nothing stretches
+    // or runs off an ultrawide or portrait screen; `more` = how much extra screen there is around it.
+    readonly property real fh: Math.min(height, width * 9 / 16)
+    readonly property real fw: fh * 16 / 9
+    readonly property real more: fh > 0 ? Math.min(4, width * height / (fw * fh)) : 1   // capped: sizes are odd while the window opens
     color: "#000000"
     // Samples the real Arch logo glyph into points (x, y in 0..1, edge = on the outline).
     component LogoSampler: Canvas {
@@ -22,8 +27,15 @@ Rectangle {
             g.fillStyle = "white"; g.textAlign = "center"; g.textBaseline = "middle"
             g.font = "230px \"JetBrainsMono Nerd Font\""
             g.fillText(String.fromCodePoint(0xF08C7), 130, 130)
-            const d = g.getImageData(0, 0, 260, 260).data, s = step
-            const on = (x, y) => x >= 0 && y >= 0 && x < 260 && y < 260 && d[(y * 260 + x) * 4 + 3] > 120
+            // On a scaled monitor the canvas has more real pixels than 260 x 260 (325 x 325 at 1.25), and neither
+            // Screen.devicePixelRatio nor getImageData says how many. So: mark the bottom-right corner, read a
+            // generous area and find the mark; k = real pixels per canvas pixel.
+            g.fillRect(259, 259, 1, 1)
+            const img = g.getImageData(0, 0, 1040, 1040), d = img.data, iw = img.width
+            let c = Math.min(iw, img.height) - 1
+            while (c > 0 && d[(c * iw + c) * 4 + 3] === 0) c--
+            const k = (c + 1) / 260, s = step
+            const on = (x, y) => x >= 0 && y >= 0 && x < 260 && y < 260 && d[(Math.floor(y * k) * iw + Math.floor(x * k)) * 4 + 3] > 120
             const raw = []; let x0 = 260, x1 = 0, y0 = 260, y1 = 0
             for (let y = 0; y < 260; y += s) for (let x = 0; x < 260; x += s) if (on(x, y)) {
                 const edge = !on(x + s, y) || !on(x - s, y) || !on(x, y + s) || !on(x, y - s)
@@ -37,13 +49,13 @@ Rectangle {
     }
     LogoSampler { id: logo; step: Math.round(9 / Math.max(0.6, root.detail)) }
 
-    readonly property real logoH: height * 0.58
+    readonly property real logoH: fh * 0.58
     readonly property real logoW: logoH * logo.aspect
     readonly property real cell: logoH / (260 / logo.step) * 1.05      // digit size follows the sampling grid
     function hash(i, n) { const v = Math.sin(i * 12.9898 + n * 78.233) * 43758.5453; return v - Math.floor(v) }
 
     Repeater {   // falling binary rain, very faint
-        model: Math.round(28 * root.detail)
+        model: Math.round(28 * root.detail * root.more)
         delegate: Text {
             required property int index
             readonly property real x0: root.hash(index, 1)
@@ -53,7 +65,7 @@ Rectangle {
             y: ((root.hash(index, 3) * root.height + root.t * v) % (root.height * 1.6)) - root.height * 0.6
             text: Array.from({ length: 22 }, (_, i) => root.hash(index * 31 + i, n) > 0.5 ? "1" : "0").join("\n")
             color: "white"; opacity: 0.05 + root.hash(index, 4) * 0.06
-            font.family: "JetBrainsMono Nerd Font"; font.pixelSize: Math.max(9, root.height * 0.016); lineHeight: 1.05
+            font.family: "JetBrainsMono Nerd Font"; font.pixelSize: Math.max(9, root.fh * 0.016); lineHeight: 1.05
         }
     }
     Item {

@@ -10,6 +10,11 @@ Rectangle {
     property real detail: 1
     property real t: 20
     Timer { interval: Math.round(1000 / Math.max(5, root.fps)); repeat: true; running: root.running; onTriggered: root.t += root.speed * interval / 1000 }
+    // Sizes follow the largest 16:9 area that fits (fh = its height, fw = its width), so nothing stretches
+    // or runs off an ultrawide or portrait screen; `more` = how much extra screen there is around it.
+    readonly property real fh: Math.min(height, width * 9 / 16)
+    readonly property real fw: fh * 16 / 9
+    readonly property real more: fh > 0 ? Math.min(4, width * height / (fw * fh)) : 1   // capped: sizes are odd while the window opens
     gradient: Gradient { GradientStop { position: 0; color: "#070912" } GradientStop { position: 0.7; color: "#030407" } GradientStop { position: 1; color: "#010102" } }
     // Samples the real Arch logo glyph into points (x, y in 0..1, edge = on the outline).
     component LogoSampler: Canvas {
@@ -22,8 +27,15 @@ Rectangle {
             g.fillStyle = "white"; g.textAlign = "center"; g.textBaseline = "middle"
             g.font = "230px \"JetBrainsMono Nerd Font\""
             g.fillText(String.fromCodePoint(0xF08C7), 130, 130)
-            const d = g.getImageData(0, 0, 260, 260).data, s = step
-            const on = (x, y) => x >= 0 && y >= 0 && x < 260 && y < 260 && d[(y * 260 + x) * 4 + 3] > 120
+            // On a scaled monitor the canvas has more real pixels than 260 x 260 (325 x 325 at 1.25), and neither
+            // Screen.devicePixelRatio nor getImageData says how many. So: mark the bottom-right corner, read a
+            // generous area and find the mark; k = real pixels per canvas pixel.
+            g.fillRect(259, 259, 1, 1)
+            const img = g.getImageData(0, 0, 1040, 1040), d = img.data, iw = img.width
+            let c = Math.min(iw, img.height) - 1
+            while (c > 0 && d[(c * iw + c) * 4 + 3] === 0) c--
+            const k = (c + 1) / 260, s = step
+            const on = (x, y) => x >= 0 && y >= 0 && x < 260 && y < 260 && d[(Math.floor(y * k) * iw + Math.floor(x * k)) * 4 + 3] > 120
             const raw = []; let x0 = 260, x1 = 0, y0 = 260, y1 = 0
             for (let y = 0; y < 260; y += s) for (let x = 0; x < 260; x += s) if (on(x, y)) {
                 const edge = !on(x + s, y) || !on(x - s, y) || !on(x, y + s) || !on(x, y - s)
@@ -38,7 +50,7 @@ Rectangle {
     LogoSampler { id: logo; step: 6 }
     // the constellation = outline points, thinned out
     readonly property var stars: logo.points.filter(p => p.edge)
-    readonly property real logoH: height * 0.6
+    readonly property real logoH: fh * 0.6
     readonly property real logoW: logoH * logo.aspect
 
     component Clouds: Item {
@@ -53,9 +65,9 @@ Rectangle {
             anchors.fill: parent; renderStrategy: Canvas.Cooperative
             onWidthChanged: requestPaint(); onHeightChanged: requestPaint()
             onPaint: {
-                const g = getContext("2d"), W = root.width; g.reset(); if (W <= 0) return
-                for (let i = 0; i < 60; i++) {
-                    const x = Math.random() * W, y = (cl.bandTop + Math.random() * cl.band) * height, r = W * (0.05 + Math.random() * 0.12)
+                const g = getContext("2d"), W = root.width; g.reset(); if (W <= 0 || root.fw <= 0) return
+                for (let i = 0; i < 60 * Math.min(4, W / root.fw); i++) {
+                    const x = Math.random() * W, y = (cl.bandTop + Math.random() * cl.band) * height, r = root.fw * (0.05 + Math.random() * 0.12)
                     for (const dx of [0, W]) {
                         const gr = g.createRadialGradient(x + dx, y, 0, x + dx, y, r)
                         gr.addColorStop(0, Qt.rgba(0.7, 0.76, 0.9, cl.alpha)); gr.addColorStop(1, Qt.rgba(0.7, 0.76, 0.9, 0))
@@ -66,7 +78,7 @@ Rectangle {
         }
     }
     Repeater {   // far stars
-        model: Math.round(140 * root.detail)
+        model: Math.round(140 * root.detail * root.more)
         delegate: Rectangle {
             readonly property real a: Math.random()
             readonly property real b: Math.random()
