@@ -1,8 +1,9 @@
 -- Your displays. Saving this file applies it right away.
 -- Easiest: change them in the Display panel (display icon in the top bar); it writes the lines below.
 --
--- A monitor that isn't listed here gets its highest resolution at 60 Hz (or the closest rate it supports).
--- To choose yourself, add one line per monitor. Names: run `hyprctl monitors` (e.g. DP-1, HDMI-A-1).
+-- A monitor gets a line here the first time it's connected: its highest resolution at 60 Hz (or the
+-- closest rate it supports). Change it in the Display panel or here; it's kept from then on.
+-- One line per monitor. Names: run `hyprctl monitors` (e.g. DP-1, HDMI-A-1).
 --   hl.monitor({ output = "DP-1", mode = "1920x1080@144", position = "0x0", scale = 1, vrr = 0 })
 --   mode: "WIDTHxHEIGHT@HZ"   position: "auto" or "XxY"   scale: 1, 1.25, 1.5, 2 ...
 --   vrr = 0 : FreeSync/G-Sync off (vrr = 2, "only in fullscreen", makes many monitors flash black)

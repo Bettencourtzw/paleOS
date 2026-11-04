@@ -4,18 +4,19 @@
 local home = os.getenv("HOME")
 
 ---- DISPLAYS ----
--- monitors.lua holds your choices (Display panel, or edit it: saving applies it right away).
--- A monitor it doesn't name gets its highest resolution at 60 Hz, or the rate closest to 60 that
--- resolution supports, read from what the monitor reports. Nothing here is fixed to one screen.
+-- monitors.lua holds your monitor settings (Display panel, or edit it: saving applies it right away).
+-- The first time a monitor is connected it gets its highest resolution at 60 Hz (or the rate closest
+-- to 60 that resolution supports), and that is saved to monitors.lua. From then on the saved line is used.
+local monitors_file = home .. "/.config/hypr/monitors.lua"
 local named, set_monitor = {}, hl.monitor
 hl.monitor = function(spec)
     if type(spec) == "table" and spec.output and spec.output ~= "" then named[spec.output] = true end
     return set_monitor(spec)
 end
-dofile(home .. "/.config/hypr/monitors.lua")
+dofile(monitors_file)
 hl.monitor = set_monitor
 
-local function default_mode(m)
+local function first_mode(m)
     local best
     for _, md in ipairs(type(m.available_modes) == "table" and m.available_modes or {}) do
         local px, off = md.width * md.height, math.abs(md.refresh_rate - 60)
@@ -23,19 +24,25 @@ local function default_mode(m)
     end
     return best and best.md
 end
-local function auto_monitor(m)
-    if named[m.name] or named["desc:" .. (m.description or "")] then return end
-    local md = default_mode(m)
-    if md then
-        set_monitor({ output = m.name, mode = string.format("%dx%d@%.3f", md.width, md.height, md.refresh_rate),
-                      position = "auto", scale = 1, vrr = 0 })
+local function new_monitors()            -- at start-up, on reload, and whenever a monitor is plugged in
+    for _, m in ipairs(hl.get_monitors({ all = true }) or {}) do
+        local virtual = m.name == "FALLBACK" or m.name:match("^HEADLESS")
+        local md = not (named[m.name] or named["desc:" .. (m.description or "")] or virtual) and first_mode(m)
+        if md then
+            local spec = { output = m.name, mode = string.format("%dx%d@%g", md.width, md.height, math.floor(md.refresh_rate * 100 + 0.5) / 100),
+                           position = "auto", scale = 1, vrr = 0 }
+            set_monitor(spec)
+            named[m.name] = true
+            local f = io.open(monitors_file, "a")
+            if f then
+                f:write(string.format('hl.monitor({ output = "%s", position = "auto", vrr = 0, mode = "%s", scale = 1 })\n', spec.output, spec.mode))
+                f:close()
+            end
+        end
     end
 end
-local function auto_monitors()           -- at start-up, on reload, and whenever a monitor is plugged in
-    for _, m in ipairs(hl.get_monitors({ all = true }) or {}) do auto_monitor(m) end
-end
-auto_monitors()
-hl.on("monitor.added", auto_monitors)
+new_monitors()
+hl.on("monitor.added", new_monitors)
 
 ---- AUTOSTART ----
 -- waybar and the paleOS shell (panels + password dialog) run as systemd user services so

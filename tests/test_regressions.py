@@ -253,5 +253,19 @@ class Regressions(unittest.TestCase):
         self.assertIn("would run: pacman -S --needed --noconfirm nvidia-utils libva-nvidia-driver nvidia-open", r.stdout)
         self.assertIn("nvidia-suspend.service", r.stdout)
 
+    def test_display_edits_the_line_saved_for_a_new_monitor(self):
+        # hyprland.lua saves this line the first time a monitor is connected; the Display panel must edit it in place
+        monitor = {"name": "DP-2", "width": 3440, "height": 1440, "refreshRate": 60, "scale": 1}
+        with tempfile.TemporaryDirectory() as tmp:
+            config = pathlib.Path(tmp) / ".config/hypr/monitors.lua"
+            config.parent.mkdir(parents=True)
+            config.write_text((ROOT / "config/hypr/monitors.lua").read_text()
+                              + 'hl.monitor({ output = "DP-2", position = "auto", vrr = 0, mode = "3440x1440@60", scale = 1 })\n')
+            self._fake(tmp, "hyprctl", "printf '%s' '" + json.dumps([monitor]) + "'")
+            subprocess.run([ROOT / "bin/display", "set", "mode", "3440x1440@240"], env={**os.environ, "HOME": tmp, "PATH": tmp + ":" + os.environ["PATH"]}, capture_output=True, text=True, check=True)
+            text = config.read_text()
+        self.assertTrue(text.endswith('hl.monitor({ output = "DP-2", position = "auto", vrr = 0, mode = "3440x1440@240", scale = 1 })\n'))
+        self.assertEqual(text.count("\nhl.monitor("), 1)
+
 if __name__ == "__main__":
     unittest.main()
