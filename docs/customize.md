@@ -16,10 +16,10 @@ For everything else, it's a plain text file in your home folder. Most changes ap
 | Menu entries | `~/.local/bin/menu` — add a `row icon "Label"` line and a matching `case` line |
 | Panel colors | `~/.config/quickshell/Theme.qml` |
 | Keybindings | `~/.config/hypr/bindings.lua` — saving applies it right away |
-| Monitors | Display panel, or `~/.config/hypr/monitors.lua` — saving the file applies it right away. Monitors not listed get their highest resolution at 60 Hz (or the closest rate they support) |
+| Monitors | Display panel, or `~/.config/hypr/monitors.lua` — saving the file applies it right away. A new monitor starts at its highest resolution at 60 Hz (or the closest rate it supports), saved there so you can change it |
 | Window rules, gaps, animations | `~/.config/hypr/hyprland.lua` |
 | Dock | Customize → Dock; pinned apps are in `~/.config/paleos/settings.json` (`dockPinned`) |
-| Window header | Customize → Window header: on/off, height, opacity, how long it stays, hover area, which buttons. Point at the gap above a window to show it |
+| Window header | Customize → Window header: on/off, height, opacity, how long it stays, which buttons. Rest the pointer in the gap above a window to show it; click the title to focus, double-click to maximize, middle-click to close |
 | Wallpaper | Customize (desktop and lock screen follow `~/.config/hypr/wallpaper`) |
 | Animated backgrounds | Customize. Your own videos go in `~/Wallpapers/live/` (or use **Add your own images or videos…**). Built-ins are files in `~/.config/quickshell/backgrounds/` — write your own (an Item with `property bool running`, see `Night.qml`), then set `"background"` in `~/.config/paleos/settings.json` to its name (`MyThing.qml` → `"my-thing"`) |
 | Lock screen | `~/.config/hypr/hyprlock.conf` |

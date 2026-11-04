@@ -201,7 +201,6 @@ FloatingWindow {
                 Setting { visible: win.s.windowHeaders; text: "Height"; from: 24; to: 44; value: win.s.headerHeight || 32; shown: (win.s.headerHeight || 32) + " px"; onChanged: v => win.set("headerHeight", Math.round(v / 2) * 2) }
                 Setting { visible: win.s.windowHeaders; text: "Background opacity"; from: 0.3; to: 1; value: win.s.headerOpacity || 0.94; shown: Math.round((win.s.headerOpacity || 0.94) * 100) + "%"; onChanged: v => win.set("headerOpacity", Math.round(v * 20) / 20) }
                 Setting { visible: win.s.windowHeaders; text: "Stays after the pointer leaves"; from: 100; to: 1500; value: win.s.headerDelay || 350; shown: ((win.s.headerDelay || 350) / 1000).toFixed(2) + " s"; onChanged: v => win.set("headerDelay", Math.round(v / 50) * 50) }
-                Setting { visible: win.s.windowHeaders; text: "Hover area above the window"; from: 4; to: 16; value: win.s.headerTrigger || 8; shown: (win.s.headerTrigger || 8) + " px"; onChanged: v => win.set("headerTrigger", Math.round(v)) }
                 Hint { visible: win.s.windowHeaders; text: "Buttons" }
                 Switcher { visible: win.s.windowHeaders; text: "Float / tile"; checked: !win.s.headerHideFloat; onToggled: win.set("headerHideFloat", !win.s.headerHideFloat) }
                 Switcher { visible: win.s.windowHeaders; text: "Fullscreen"; checked: !win.s.headerHideFullscreen; onToggled: win.set("headerHideFullscreen", !win.s.headerHideFullscreen) }

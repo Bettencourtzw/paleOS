@@ -45,7 +45,6 @@ Singleton {
             property int headerHeight: 32         // 24 … 44
             property real headerOpacity: 0.94     // 0.3 … 1
             property int headerDelay: 350         // ms it stays after the pointer leaves, 100 … 1500
-            property int headerTrigger: 8         // px of the hover area above the window, 4 … 16
             // buttons, stored as "hide" so a settings file from before these options shows them all
             property bool headerHideFloat: false
             property bool headerHideFullscreen: false
