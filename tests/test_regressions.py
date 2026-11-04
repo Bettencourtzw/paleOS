@@ -205,5 +205,53 @@ class Regressions(unittest.TestCase):
             self.assertFalse((pathlib.Path(tmp) / "Creating partitions.marker").exists())
 
 
+    def _fake(self, tmp, name, script):
+        f = pathlib.Path(tmp) / name
+        f.write_text("#!/bin/sh\n" + script + "\n")
+        f.chmod(0o755)
+
+    def test_display_scales_are_every_whole_pixel_scale(self):
+        monitor = {"name": "DP-1", "width": 3440, "height": 1440, "refreshRate": 60, "scale": 1}
+        with tempfile.TemporaryDirectory() as tmp:
+            self._fake(tmp, "hyprctl", "printf '%s' '" + json.dumps([monitor]) + "'")
+            out = subprocess.run([ROOT / "bin/display", "scales"], env={**os.environ, "PATH": tmp + ":" + os.environ["PATH"]}, capture_output=True, text=True, check=True).stdout
+        scales = [float(x) for x in out.split()]
+        self.assertEqual(scales, [1.0, 1.0667, 1.25, 1.3333, 1.6, 1.6667, 2.0])
+        for s in scales:   # 4 decimals is close enough for Hyprland to pick this exact scale
+            k = round(s * 120)
+            self.assertEqual((120 * 3440 % k, 120 * 1440 % k), (0, 0))
+
+    def test_display_adds_first_monitor_to_default_file(self):
+        monitor = {"name": "DP-1", "width": 2560, "height": 1440, "refreshRate": 59.95, "scale": 1}
+        with tempfile.TemporaryDirectory() as tmp:
+            config = pathlib.Path(tmp) / ".config/hypr/monitors.lua"
+            config.parent.mkdir(parents=True)
+            config.write_text((ROOT / "config/hypr/monitors.lua").read_text())
+            self._fake(tmp, "hyprctl", "printf '%s' '" + json.dumps([monitor]) + "'")
+            subprocess.run([ROOT / "bin/display", "set", "scale", "1.25"], env={**os.environ, "HOME": tmp, "PATH": tmp + ":" + os.environ["PATH"]}, capture_output=True, text=True, check=True)
+            text = config.read_text()
+        self.assertIn('hl.monitor({ output = "DP-1", position = "auto", vrr = 0, mode = "2560x1440@60", scale = 1.25 })', text)
+        self.assertEqual(text.count("\nhl.monitor("), 1)
+
+    def test_nvidia_step_skips_pcs_without_nvidia_and_old_cards(self):
+        cases = {"01:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Navi 31 [1002:744c]": "",
+                 "01:00.0 VGA compatible controller [0300]: NVIDIA Corporation GP104 [GeForce GTX 1080] [10de:1b80]": "legacy driver"}
+        for line, expect in cases.items():
+            with self.subTest(line=line), tempfile.TemporaryDirectory() as tmp:
+                self._fake(tmp, "lspci", f"echo '{line}'")
+                self._fake(tmp, "pacman", "echo SHOULD-NOT-RUN; exit 1")
+                r = subprocess.run(["bash", ROOT / "install/nvidia.sh"], env={**os.environ, "PALEOS_NVIDIA_DRYRUN": "1", "PATH": tmp + ":" + os.environ["PATH"]}, capture_output=True, text=True)
+                self.assertEqual(r.returncode, 0, r.stderr)
+                self.assertNotIn("would run", r.stdout)
+                self.assertIn(expect, r.stdout)
+
+    def test_nvidia_step_installs_open_driver_for_stock_kernel(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._fake(tmp, "lspci", "echo '01:00.0 VGA compatible controller [0300]: NVIDIA Corporation AD104 [GeForce RTX 4070] [10de:2786]'")
+            self._fake(tmp, "pacman", 'case "$*" in "-Qq") echo base; echo linux ;; "-Qq linux"*) echo linux ;; esac')
+            r = subprocess.run(["bash", ROOT / "install/nvidia.sh"], env={**os.environ, "PALEOS_NVIDIA_DRYRUN": "1", "PATH": tmp + ":" + os.environ["PATH"]}, capture_output=True, text=True, check=True)
+        self.assertIn("would run: pacman -S --needed --noconfirm nvidia-utils libva-nvidia-driver nvidia-open", r.stdout)
+        self.assertIn("nvidia-suspend.service", r.stdout)
+
 if __name__ == "__main__":
     unittest.main()

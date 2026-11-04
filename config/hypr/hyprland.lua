@@ -2,7 +2,40 @@
 -- Your own files, loaded below:  monitors.lua (displays) · bindings.lua (keys)
 
 local home = os.getenv("HOME")
+
+---- DISPLAYS ----
+-- monitors.lua holds your choices (Display panel, or edit it: saving applies it right away).
+-- A monitor it doesn't name gets its highest resolution at 60 Hz, or the rate closest to 60 that
+-- resolution supports, read from what the monitor reports. Nothing here is fixed to one screen.
+local named, set_monitor = {}, hl.monitor
+hl.monitor = function(spec)
+    if type(spec) == "table" and spec.output and spec.output ~= "" then named[spec.output] = true end
+    return set_monitor(spec)
+end
 dofile(home .. "/.config/hypr/monitors.lua")
+hl.monitor = set_monitor
+
+local function default_mode(m)
+    local best
+    for _, md in ipairs(type(m.available_modes) == "table" and m.available_modes or {}) do
+        local px, off = md.width * md.height, math.abs(md.refresh_rate - 60)
+        if not best or px > best.px or (px == best.px and off < best.off) then best = { px = px, off = off, md = md } end
+    end
+    return best and best.md
+end
+local function auto_monitor(m)
+    if named[m.name] or named["desc:" .. (m.description or "")] then return end
+    local md = default_mode(m)
+    if md then
+        set_monitor({ output = m.name, mode = string.format("%dx%d@%.3f", md.width, md.height, md.refresh_rate),
+                      position = "auto", scale = 1, vrr = 0 })
+    end
+end
+local function auto_monitors()           -- at start-up, on reload, and whenever a monitor is plugged in
+    for _, m in ipairs(hl.get_monitors({ all = true }) or {}) do auto_monitor(m) end
+end
+auto_monitors()
+hl.on("monitor.added", auto_monitors)
 
 ---- AUTOSTART ----
 -- waybar and the paleOS shell (panels + password dialog) run as systemd user services so
@@ -21,6 +54,27 @@ hl.env("HYPRCURSOR_SIZE", "24")
 hl.env("MESA_SHADER_CACHE_MAX_SIZE", "12G")   -- fewer shader stutters in games
 -- include Flatpak apps everywhere (menus, portals, file "open with")
 hl.env("XDG_DATA_DIRS", home .. "/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share")
+-- NVIDIA-only PCs: video decoding (VA-API) and OpenGL on the NVIDIA driver. Skipped on laptops that
+-- also have an Intel/AMD GPU, so apps don't all wake up the NVIDIA card.
+local function nvidia_only()
+    local found = false
+    for i = 0, 7 do
+        local f = io.open("/sys/class/drm/card" .. i .. "/device/vendor")
+        if f then
+            local vendor = f:read("l"); f:close()
+            if vendor ~= "0x10de" then return false end
+            found = true
+        end
+    end
+    local driver = io.open("/proc/driver/nvidia/version")
+    if driver then driver:close() end
+    return found and driver ~= nil
+end
+if nvidia_only() then
+    hl.env("LIBVA_DRIVER_NAME", "nvidia")
+    hl.env("NVD_BACKEND", "direct")
+    hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+end
 
 ---- LOOK ----
 hl.config({
