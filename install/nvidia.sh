@@ -14,7 +14,7 @@ echo "NVIDIA GPU found: $(sed -E 's/.*: //; s/ \[10de:[^]]*\]//; s/ \(rev [^)]*\
 
 # The open driver (Arch's only current one) supports GTX 16xx / RTX 20xx (Turing) and newer.
 # Older cards (Maxwell, Pascal, Volta: GTX 900/1000, Titan V) need the legacy 580xx driver from the AUR.
-if ! grep -qE '\b(TU|GA|AD|GB|GH)[0-9]{3}\b' <<<"$gpus"; then
+if ! grep -qE '\b(TU|GA|AD|GB|GH)[0-9]{3}[A-Z]*\b' <<<"$gpus"; then
   echo "This NVIDIA card is older than the GTX 16 / RTX 20 series; Arch's current driver doesn't support it."
   echo "Install the legacy driver from the AUR (Menu → Install → AUR package): nvidia-580xx-dkms nvidia-580xx-utils"
   echo "Leaving the graphics driver as it is."
@@ -22,8 +22,9 @@ if ! grep -qE '\b(TU|GA|AD|GB|GH)[0-9]{3}\b' <<<"$gpus"; then
 fi
 
 # 1. driver — keep whatever NVIDIA driver is already installed
-installed=$(pacman -Qq 2>/dev/null | grep -E '^nvidia(-open)?(-lts|-dkms)?$|^nvidia-[0-9]+xx-dkms$' || true)
-pkgs=(nvidia-utils libva-nvidia-driver)
+installed=$(pacman -Qq 2>/dev/null | grep -E '^nvidia(-open)?(-beta)?(-lts|-dkms)?$|^nvidia-[0-9]+xx-dkms$' || true)
+pkgs=(libva-nvidia-driver)
+pacman -T nvidia-utils >/dev/null || pkgs+=(nvidia-utils)       # unless it (or a variant: beta, 580xx) is installed
 if [[ -z $installed ]]; then
   kernels=$(pacman -Qq linux linux-lts linux-zen linux-hardened linux-rt linux-rt-lts 2>/dev/null || true)
   if [[ $kernels == linux ]]; then
@@ -31,6 +32,7 @@ if [[ -z $installed ]]; then
   else
     pkgs+=(nvidia-open-dkms)                             # other kernels: built for each kernel installed
     for k in $kernels; do pkgs+=("$k-headers"); done
+    [[ -n $kernels ]] || echo "Note: install your kernel's headers package too, so the driver can be built for it."
   fi
   echo "Installing the NVIDIA driver: ${pkgs[*]}"
 else

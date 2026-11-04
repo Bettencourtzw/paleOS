@@ -15,17 +15,25 @@ if [[ -n $have && $(vercmp "$have" 0.57) -lt 0 ]]; then
   echo "Your Hyprland ($have) is older than 0.57, which paleOS's config needs."
   ask "Upgrade the system now?" y && PALEOS_UPDATE=1 || { echo "Stopping — upgrade first with: sudo pacman -Syu"; exit 1; }
 fi
+if pacman -Qq pulseaudio >/dev/null 2>&1; then       # replaced by PipeWire (pipewire-pulse)
+  echo "Replacing PulseAudio with PipeWire."; pacman -Rdd --noconfirm $(pacman -Qq pulseaudio pulseaudio-bluetooth 2>/dev/null)
+fi
 if [[ ${PALEOS_UPDATE:-} == 1 ]]; then pacman -Syu --needed --noconfirm $pkgs; else pacman -S --needed --noconfirm $pkgs; fi
 
 # 2. the Rust app indexer used by the menu (prebuilt on the ISO, otherwise compiled once)
 if [[ -f bin/pale-apps ]]; then      # (-f: the ISO copy loses its executable bit)
   install -m755 bin/pale-apps /usr/local/bin/pale-apps
 else
-  had_rust=$(pacman -Q rust >/dev/null 2>&1 && echo yes || true)
-  pacman -S --needed --noconfirm --asdeps rust
-  CARGO_TARGET_DIR=/tmp/pale-apps-build cargo build --release --quiet --manifest-path tools/pale-apps/Cargo.toml
-  install -m755 /tmp/pale-apps-build/release/pale-apps /usr/local/bin/pale-apps; rm -rf /tmp/pale-apps-build
-  [[ -z $had_rust ]] && pacman -Rns --noconfirm rust >/dev/null || true     # leave the system as clean as before
+  build="cargo build --release --quiet --manifest-path tools/pale-apps/Cargo.toml"
+  if pacman -Qq rustup >/dev/null 2>&1 && [[ -n $user ]]; then     # rustup conflicts with rust: use the user's toolchain
+    tmp=$(runuser -u "$user" -- mktemp -d); runuser -u "$user" -- env CARGO_TARGET_DIR="$tmp" $build
+  else
+    had_rust=$(pacman -Q rust >/dev/null 2>&1 && echo yes || true)
+    pacman -S --needed --noconfirm --asdeps rust
+    tmp=$(mktemp -d); CARGO_TARGET_DIR=$tmp $build
+    [[ -z $had_rust ]] && pacman -Rns --noconfirm rust >/dev/null || true     # leave the system as clean as before
+  fi
+  install -m755 "$tmp/release/pale-apps" /usr/local/bin/pale-apps; rm -rf "$tmp"
 fi
 
 # 3. safety, privacy, performance
@@ -33,8 +41,8 @@ install -Dm644 system/sysctl.d/99-paleos.conf /etc/sysctl.d/99-paleos.conf
 install -Dm644 system/resolved.conf.d/paleos.conf /etc/systemd/resolved.conf.d/paleos.conf
 install -Dm644 system/NetworkManager/paleos.conf /etc/NetworkManager/conf.d/paleos.conf
 # inside the ISO installer's chroot /etc/resolv.conf is a temporary mount; the installer links it afterwards
+systemctl enable --now systemd-resolved 2>/dev/null || systemctl enable systemd-resolved   # (no --now in a chroot)
 findmnt -n /etc/resolv.conf >/dev/null || ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
-systemctl enable systemd-resolved
 sysctl --system >/dev/null 2>&1 || true
 ufw default deny incoming >/dev/null; ufw default allow outgoing >/dev/null; ufw --force enable >/dev/null 2>&1 || true
 systemctl enable ufw
@@ -59,6 +67,9 @@ if ask "Install the paleOS login screen and boot splash?" y; then
     sed -i -E 's/^HOOKS=\(base (udev|systemd) /HOOKS=(base \1 plymouth /' /etc/mkinitcpio.conf
     grep -qE '^HOOKS=.*plymouth' /etc/mkinitcpio.conf || echo "Note: add 'plymouth' to HOOKS in /etc/mkinitcpio.conf for the boot splash."
   fi
+  for f in /boot/loader/entries/*.conf; do [[ -f $f ]] || continue       # systemd-boot
+    grep -q '^options.*splash' "$f" || sed -i 's/^options .*/& quiet splash/' "$f"
+  done
   for f in /etc/kernel/cmdline /etc/default/grub; do [[ -f $f ]] || continue
     if [[ $f == */grub ]]; then grep -q 'splash' $f || sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT="/&quiet splash /' $f
     else for a in quiet splash; do grep -qw "$a" $f || sed -i "s|\$| $a|" $f; done; fi

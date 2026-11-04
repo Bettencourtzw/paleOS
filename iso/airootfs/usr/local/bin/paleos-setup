@@ -88,7 +88,10 @@ has() { grep -qF "$1" <<<"$extras"; }
 gpu_pkgs="mesa"; gpu=$(lspci | grep -iE 'vga|3d|display' || true)
 grep -qi amd    <<<"$gpu" && gpu_pkgs+=" vulkan-radeon"
 grep -qi intel  <<<"$gpu" && gpu_pkgs+=" vulkan-intel intel-media-driver"
-grep -qi nvidia <<<"$gpu" && gpu_pkgs+=" nvidia-open-dkms nvidia-utils"
+# NVIDIA: the open driver supports GTX 16 / RTX 20 (Turing) and newer, incl. laptop chips (GA107M);
+# older cards need the legacy AUR driver, which install/nvidia.sh explains after the install
+nvidia=no; grep -qE 'NVIDIA.*\b(TU|GA|AD|GB|GH)[0-9]{3}[A-Z]*\b' <<<"$gpu" && nvidia=yes
+[[ $nvidia == yes ]] && gpu_pkgs+=" nvidia-open-dkms nvidia-utils"
 ucode=""; grep -q AuthenticAMD /proc/cpuinfo && ucode=amd-ucode; grep -q GenuineIntel /proc/cpuinfo && ucode=intel-ucode
 
 # ---------- 2. summary ----------------------------------------------------------
@@ -184,10 +187,10 @@ run "Configuring the system" "arch-chroot $MNT bash /root/paleos-chroot.sh"
 printf '%s:%s\n' "$username" "$password" | arch-chroot $MNT chpasswd
 
 if has "Gaming"; then
-  run "Enabling multilib + installing Steam" "sed -i '/^#\\[multilib\\]/{s/^#//;n;s/^#//}' $MNT/etc/pacman.conf && arch-chroot $MNT pacman -Syu --noconfirm --needed steam gamemode lib32-gamemode $( grep -qi amd <<<"$gpu" && echo lib32-vulkan-radeon ) $( grep -qi intel <<<"$gpu" && echo lib32-vulkan-intel ) $( grep -qi nvidia <<<"$gpu" && echo lib32-nvidia-utils )"
+  run "Enabling multilib + installing Steam" "sed -i '/^#\\[multilib\\]/{s/^#//;n;s/^#//}' $MNT/etc/pacman.conf && arch-chroot $MNT pacman -Syu --noconfirm --needed steam gamemode lib32-gamemode $( grep -qi amd <<<"$gpu" && echo lib32-vulkan-radeon ) $( grep -qi intel <<<"$gpu" && echo lib32-vulkan-intel ) $( [[ $nvidia == yes ]] && echo lib32-nvidia-utils )"
 fi
 if has "AUR helper"; then
-  run "Installing yay (AUR helper)" "arch-chroot $MNT pacman -S --noconfirm --needed base-devel && arch-chroot $MNT runuser -u $username -- bash -c 'cd /tmp && git clone --depth 1 https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -s --noconfirm' && arch-chroot $MNT bash -c 'pacman -U --noconfirm /tmp/yay-bin/yay-bin-*.pkg.tar.zst; rm -rf /tmp/yay-bin'"
+  run "Installing yay (AUR helper)" "arch-chroot $MNT pacman -S --noconfirm --needed base-devel && arch-chroot $MNT runuser -u $username -- bash -c 'cd ~ && git clone --depth 1 https://aur.archlinux.org/yay-bin.git .yay-build && cd .yay-build && makepkg -s --noconfirm' && arch-chroot $MNT bash -c 'pacman -U --noconfirm /home/$username/.yay-build/yay-bin-*.pkg.tar.zst && rm -rf /home/$username/.yay-build'"
 fi
 
 # ---------- 6. paleOS desktop -----------------------------------------------------

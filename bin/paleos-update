@@ -6,11 +6,12 @@ set -euo pipefail
 REPO_URL=https://github.com/Bettencourtzw/paleOS.git
 dir=${PALEOS_DIR:-$HOME/.local/share/paleOS}
 
+state=~/.local/state/paleos/applied        # last version fully applied (an update that failed is retried)
 if [[ -d $dir/.git ]]; then
-  old=$(git -C "$dir" rev-parse HEAD)
+  old=$(cat "$state" 2>/dev/null || git -C "$dir" rev-parse HEAD)
   git -C "$dir" fetch -q --depth 50 origin main
   new=$(git -C "$dir" rev-parse FETCH_HEAD)
-  [[ $old == "$new" ]] && { echo "paleOS is up to date."; exit 0; }
+  [[ $old == "$new" && $(git -C "$dir" rev-parse HEAD) == "$new" ]] && { echo "paleOS is up to date."; exit 0; }
   echo "What's new:"; git -C "$dir" log --format='  • %s' "$old..$new" 2>/dev/null | head -20 || true
   changed=$(git -C "$dir" diff --name-only "$old" "$new" 2>/dev/null || echo all)
 else
@@ -25,7 +26,7 @@ read -rp "Update now? [Y/n] " a; [[ ${a:-y} =~ ^[Yy] ]] || exit 0
 [[ -n $new ]] && git -C "$dir" reset -q --hard "$new"
 
 # system part (packages, login screen, security settings) only when those files changed
-if [[ $changed == all ]] || grep -qE '^(packages\.txt|install/system\.sh|system/|themes/|tools/)' <<<"$changed"; then
+if [[ $changed == all ]] || grep -qE '^(packages\.txt|install/(system|nvidia)\.sh|system/|themes/|tools/)' <<<"$changed"; then
   echo "System files changed — your password is needed."
   grep -q '^tools/' <<<"$changed" && rm -f "$dir/bin/pale-apps"   # rebuild the app indexer from new source
   sudo env PALEOS_YES=1 PALEOS_USER="$USER" bash "$dir/install/system.sh"
@@ -34,11 +35,13 @@ fi
 # user part, keeping the keyboard layout you use now
 km=$(sed -n 's/^ *kb_layout = "\([^"]*\)".*/\1/p' ~/.config/hypr/hyprland.lua 2>/dev/null | head -1)
 PALEOS_KEYMAP=${km:-us} bash "$dir/install/user.sh"
+[[ -f ~/.config/paleos/settings.json ]] && { ~/.local/bin/paleos-apply >/dev/null 2>&1 || true; }   # your Customize settings
+[[ -n ${new:-} ]] && { mkdir -p "$(dirname "$state")"; echo "$new" > "$state"; }
 
 # reload the desktop
 hyprctl reload >/dev/null 2>&1 || true
 makoctl reload >/dev/null 2>&1 || true
 systemctl --user daemon-reload
-systemctl --user restart waybar paleos-shell paleos-hypr-reload.path 2>/dev/null || true
+systemctl --user restart waybar hypridle paleos-shell paleos-hypr-reload.path 2>/dev/null || true
 notify-send -u low "paleOS updated" 2>/dev/null || true
 echo "paleOS updated."

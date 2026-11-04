@@ -15,7 +15,7 @@ for d in config/*; do
   cp -a "$d" "$C/$n"
 done
 # keep choices the user made last time
-for keep in hypr/monitors.lua hypr/wallpaper; do
+for keep in hypr/monitors.lua hypr/wallpaper gtk-3.0/bookmarks; do
   [[ -e $backup/$keep || -L $backup/$keep ]] && cp -a "$backup/$keep" "$C/$keep"
 done
 [[ -d $backup ]] && echo "Old configs moved to $backup"
@@ -30,16 +30,19 @@ sed -i "s|\$HOME|$HOME|" "$C/hypr/hyprpaper.conf"
 
 # 3. keyboard layout for the desktop
 km=${PALEOS_KEYMAP:-$(localectl status 2>/dev/null | awk -F': ' '/X11 Layout/{print $2}')}
-km=${km%%-*}; km=${km:-us}
+km=${km%%-*}
+case $km in uk) km=gb ;; sv) km=se ;; sg) km=ch ;; cf) km=ca ;; la) km=latam ;; jp106) km=jp ;; dvorak) km=us ;; esac
+km=${km:-us}
 sed -i "s|kb_layout = \"us\",|kb_layout = \"$km\",|" "$C/hypr/hyprland.lua"
 
 # 4. user services (symlinks, so this also works inside the ISO installer's chroot)
 U=$C/systemd/user; W=$U/graphical-session.target.wants
-mkdir -p "$W" "$U/waybar.service.d"
+mkdir -p "$W" "$U/waybar.service.d" "$U/hypridle.service.d"
 cp systemd/paleos-shell.service systemd/paleos-hypr-reload.path systemd/paleos-hypr-reload.service "$U/"
-printf '[Service]\nRestart=always\nRestartSec=1\n' > "$U/waybar.service.d/restart.conf"
+for s in waybar hypridle; do printf '[Service]\nRestart=always\nRestartSec=1\n' > "$U/$s.service.d/restart.conf"; done
 ln -sf ../paleos-shell.service "$W/paleos-shell.service"
 ln -sf ../paleos-hypr-reload.path "$W/paleos-hypr-reload.path"
 ln -sf /usr/lib/systemd/user/waybar.service "$W/waybar.service"
+ln -sf /usr/lib/systemd/user/hypridle.service "$W/hypridle.service"     # idle lock + lock before sleep
 rm -f "$W/hyprpolkitagent.service"
 echo "paleOS user part done."

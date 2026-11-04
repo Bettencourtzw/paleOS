@@ -248,9 +248,9 @@ class Regressions(unittest.TestCase):
     def test_nvidia_step_installs_open_driver_for_stock_kernel(self):
         with tempfile.TemporaryDirectory() as tmp:
             self._fake(tmp, "lspci", "echo '01:00.0 VGA compatible controller [0300]: NVIDIA Corporation AD104 [GeForce RTX 4070] [10de:2786]'")
-            self._fake(tmp, "pacman", 'case "$*" in "-Qq") echo base; echo linux ;; "-Qq linux"*) echo linux ;; esac')
+            self._fake(tmp, "pacman", 'case "$*" in "-Qq") echo base; echo linux ;; "-Qq linux"*) echo linux ;; "-T"*) echo nvidia-utils; exit 127 ;; esac')
             r = subprocess.run(["bash", ROOT / "install/nvidia.sh"], env={**os.environ, "PALEOS_NVIDIA_DRYRUN": "1", "PATH": tmp + ":" + os.environ["PATH"]}, capture_output=True, text=True, check=True)
-        self.assertIn("would run: pacman -S --needed --noconfirm nvidia-utils libva-nvidia-driver nvidia-open", r.stdout)
+        self.assertIn("would run: pacman -S --needed --noconfirm libva-nvidia-driver nvidia-utils nvidia-open", r.stdout)
         self.assertIn("nvidia-suspend.service", r.stdout)
 
     def test_display_edits_the_line_saved_for_a_new_monitor(self):
@@ -266,6 +266,16 @@ class Regressions(unittest.TestCase):
             text = config.read_text()
         self.assertTrue(text.endswith('hl.monitor({ output = "DP-2", position = "auto", vrr = 0, mode = "3440x1440@240", scale = 1 })\n'))
         self.assertEqual(text.count("\nhl.monitor("), 1)
+
+    def test_nvidia_step_supports_laptop_and_workstation_chips(self):
+        for line in ["01:00.0 3D controller [0302]: NVIDIA Corporation GA107M [GeForce RTX 3050 Mobile] [10de:25a2]",
+                     "01:00.0 VGA compatible controller [0300]: NVIDIA Corporation TU104GL [Quadro RTX 4000] [10de:1eb1]"]:
+            with self.subTest(line=line), tempfile.TemporaryDirectory() as tmp:
+                self._fake(tmp, "lspci", f"echo '{line}'")
+                self._fake(tmp, "pacman", 'case "$*" in "-Qq") echo linux ;; "-Qq linux"*) echo linux ;; esac')
+                r = subprocess.run(["bash", ROOT / "install/nvidia.sh"], env={**os.environ, "PALEOS_NVIDIA_DRYRUN": "1", "PATH": tmp + ":" + os.environ["PATH"]}, capture_output=True, text=True, check=True)
+                self.assertNotIn("older than", r.stdout)
+                self.assertIn("nvidia-open", r.stdout)
 
 if __name__ == "__main__":
     unittest.main()
