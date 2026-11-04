@@ -14,10 +14,6 @@ def write_if_changed(path, text):
         os.makedirs(os.path.dirname(path), exist_ok=True); open(path, "w").write(text)
     return old != text
 
-def restart(name, *cmd):
-    subprocess.run(["pkill", "-x", name])
-    subprocess.Popen(list(cmd) or [name], start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
 # windows: gaps, border, rounding, blur, animations -> ~/.config/hypr/paleos.lua (loaded last by hyprland.lua)
 g, lua = int(S["gaps"]), lambda b: str(bool(b)).lower()
 write_if_changed(H("~/.config/hypr/paleos.lua"),
@@ -36,7 +32,7 @@ if S["lockMinutes"] > 0:
 if S["suspendMinutes"] > 0:
     idle += f"\nlistener {{\n    timeout = {S['suspendMinutes'] * 60}\n    on-timeout = systemctl suspend\n}}\n"
 if write_if_changed(H("~/.config/hypr/hypridle.conf"), idle):
-    restart("hypridle")
+    subprocess.run(["systemctl", "--user", "restart", "hypridle"])
 
 # top bar position
 wb = H("~/.config/waybar/config.jsonc")

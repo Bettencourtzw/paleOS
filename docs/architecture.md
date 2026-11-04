@@ -33,6 +33,6 @@ terminal only redraws what changed, so a rewrite wouldn't be noticeable.
 
 ## Services
 
-`waybar` and `paleos-shell` (Quickshell) run as systemd user services so they restart if they
+`waybar`, `hypridle` and `paleos-shell` (Quickshell) run as systemd user services so they restart if they
 crash. `paleos-hypr-reload.path` reloads Hyprland when `monitors.lua` or `bindings.lua` is saved
-(Hyprland itself only watches `hyprland.lua`). mako, swayosd, hyprpaper and hypridle are started by Hyprland at login.
+(Hyprland itself only watches `hyprland.lua`). mako, swayosd and hyprpaper are started by Hyprland at login.

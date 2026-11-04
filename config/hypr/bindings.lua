@@ -24,7 +24,6 @@ o.bind("SUPER + SHIFT + N", "Editor", "foot -e nvim")
 o.bind("SUPER + SPACE", "Menu", "~/.local/bin/launcher")
 o.bind("SUPER + K", "Show key bindings", "~/.local/bin/keybinds-menu")
 o.bind("SUPER + ESCAPE", "System menu", "~/.local/bin/launcher system")
-o.bind("SUPER + ALT + SPACE", "Setup menu", "~/.local/bin/launcher setup")
 o.bind("XF86PowerOff", "Power menu", "~/.local/bin/launcher system", { locked = true })
 o.bind("XF86Calculator", "Calculator", "~/.local/bin/launcher calc")
 

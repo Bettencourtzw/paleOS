@@ -5,29 +5,49 @@ local home = os.getenv("HOME")
 
 ---- DISPLAYS ----
 -- monitors.lua holds your monitor settings (Display panel, or edit it: saving applies it right away).
--- The first time a monitor is connected it gets its highest resolution at 60 Hz (or the rate closest
--- to 60 that resolution supports), and that is saved to monitors.lua. From then on the saved line is used.
+-- The first time a monitor is connected it gets its highest resolution that does 60 Hz (a monitor that
+-- can't do 60 gets the rate closest to it), saved to monitors.lua. From then on the saved line is used.
 local monitors_file = home .. "/.config/hypr/monitors.lua"
 local named, set_monitor = {}, hl.monitor
 hl.monitor = function(spec)
     if type(spec) == "table" and spec.output and spec.output ~= "" then named[spec.output] = true end
     return set_monitor(spec)
 end
-dofile(monitors_file)
+-- a typo in a file you edit shows a message instead of breaking the whole config
+local function load(file)
+    local f = io.open(file); if not f then return true end; f:close()
+    local ok, err = pcall(dofile, file)
+    if not ok then hl.notification.create({ text = "Error in " .. file:gsub("^.*/", "") .. ": " .. tostring(err), timeout = 15000 }) end
+    return ok
+end
+local monitors_ok = load(monitors_file)
 hl.monitor = set_monitor
+local function is_named(m)              -- named by its output (DP-1) or by description (desc:..., matched by prefix)
+    if named[m.name] then return true end
+    for sel in pairs(named) do
+        if sel:sub(1, 5) == "desc:" then local x = hl.get_monitor(sel); if x and x.name == m.name then return true end end
+    end
+    return false
+end
 
 local function first_mode(m)
+    -- the highest resolution that does 60 Hz (TVs also list e.g. 4096x2160 at 24 Hz); only a monitor that
+    -- can't do 60 at all gets its highest resolution at the rate closest to 60
+    local modes, sixty = type(m.available_modes) == "table" and m.available_modes or {}, {}
+    for _, md in ipairs(modes) do if md.refresh_rate >= 59 then sixty[#sixty + 1] = md end end
+    if #sixty > 0 then modes = sixty end
     local best
-    for _, md in ipairs(type(m.available_modes) == "table" and m.available_modes or {}) do
+    for _, md in ipairs(modes) do
         local px, off = md.width * md.height, math.abs(md.refresh_rate - 60)
         if not best or px > best.px or (px == best.px and off < best.off) then best = { px = px, off = off, md = md } end
     end
     return best and best.md
 end
 local function new_monitors()            -- at start-up, on reload, and whenever a monitor is plugged in
+    if not monitors_ok then return end   -- don't add lines while monitors.lua has an error
     for _, m in ipairs(hl.get_monitors({ all = true }) or {}) do
         local virtual = m.name == "FALLBACK" or m.name:match("^HEADLESS")
-        local md = not (named[m.name] or named["desc:" .. (m.description or "")] or virtual) and first_mode(m)
+        local md = not (virtual or is_named(m)) and first_mode(m)
         if md then
             local spec = { output = m.name, mode = string.format("%dx%d@%g", md.width, md.height, math.floor(md.refresh_rate * 100 + 0.5) / 100),
                            position = "auto", scale = 1, vrr = 0 }
@@ -45,13 +65,12 @@ new_monitors()
 hl.on("monitor.added", new_monitors)
 
 ---- AUTOSTART ----
--- waybar and the paleOS shell (panels + password dialog) run as systemd user services so
+-- waybar, hypridle and the paleOS shell (panels + password dialog) run as systemd user services so
 -- they restart if they crash; these small helpers just start with the session.
 hl.on("hyprland.start", function()
     hl.exec_cmd("mako")
     hl.exec_cmd("swayosd-server")
     hl.exec_cmd("hyprpaper")
-    hl.exec_cmd("hypridle")
     hl.exec_cmd("gsettings set org.gnome.desktop.interface color-scheme prefer-dark")
 end)
 
@@ -145,7 +164,7 @@ hl.config({
 hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
 
 ---- KEYS ----
-dofile(home .. "/.config/hypr/bindings.lua")
+load(home .. "/.config/hypr/bindings.lua")
 
 ---- WINDOW RULES ----
 hl.window_rule({ name = "suppress-maximize", match = { class = ".*" }, suppress_event = "maximize" })
