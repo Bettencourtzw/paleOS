@@ -41,6 +41,7 @@ Singleton {
             property int borderSize: 2
             property bool blur: true
             property bool animations: true
+            property bool windowHeaders: true     // header with buttons when pointing at a window's top edge
             // power (edited in Power settings)
             property int screensaverMinutes: 5
             property int lockMinutes: 10

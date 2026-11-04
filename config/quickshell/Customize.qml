@@ -179,6 +179,7 @@ FloatingWindow {
                 Setting { text: "Rounded corners"; from: 0; to: 20; value: win.s.rounding; shown: win.s.rounding + " px"; onChanged: v => win.set("rounding", Math.round(v)) }
                 Switcher { text: "Blur behind see-through windows"; checked: win.s.blur; onToggled: win.set("blur", !win.s.blur) }
                 Switcher { text: "Animations"; checked: win.s.animations; onToggled: win.set("animations", !win.s.animations) }
+                Switcher { text: "Window header when pointing at the top edge"; checked: win.s.windowHeaders; onToggled: win.set("windowHeaders", !win.s.windowHeaders) }
             }
 
             // Dock -----------------------------------------------------------------------------
