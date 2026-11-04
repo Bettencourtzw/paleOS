@@ -4,7 +4,7 @@
   display info              name, resolution, refresh, scale (JSON)
   display rates             refresh rates for the current resolution, e.g. 260, 240, 60
   display modes             every supported resolution with its refresh rates (JSON)
-  display scales            scales that give a sharp, whole-pixel result on this monitor
+  display scales            every scale Hyprland accepts on this monitor (sharp, whole-pixel)
   display set mode  WxH@R   e.g. 1920x1080@240
   display set scale S       e.g. 1.25
   display set hdr on|off    HDR always on (10-bit) or always off
@@ -34,9 +34,11 @@ def modes(m):
     return [{"resolution": r, "rates": sorted(out[r], reverse=True)} for r in order]
 
 def scales(m):
-    ok = [s for s in (1, 1.2, 1.25, 1.5, 1.6, 1.75, 2, 2.5, 3)
-          if (m["width"] / s).is_integer() and (m["height"] / s).is_integer()]
-    return [round(s, 2) for s in ok]
+    # Hyprland takes scales in steps of 1/120 that divide the resolution evenly (anything else it
+    # rounds to one of these), so list them all: from 1 up to 3, keeping at least 720 px of height.
+    w, h = m["width"], m["height"]
+    ok = [k / 120 for k in range(120, 361) if (120 * w) % k == 0 and (120 * h) % k == 0 and h * 120 / k >= 720]
+    return [round(s, 4) for s in ok] or [1]
 
 LUA_TOKEN = re.compile(r'''--\[(=*)\[.*?\]\1\]|--[^\n]*|\[(=*)\[.*?\]\2\]|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[A-Za-z_]\w*|[-+]?\d+(?:\.\d+)?|[^\s]''', re.S)
 

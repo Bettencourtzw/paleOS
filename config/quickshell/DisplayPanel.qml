@@ -49,15 +49,31 @@ Panel {
         onActivated: i => p.setMode(p.res, parseInt(p.rateList[i]))
     }
 
-    // scale snaps to sharp values and applies when you let go
+    // scale: drag freely; the label shows the nearest scale Hyprland supports on this monitor
+    // (whole-pixel ones only, from `display scales`), applied when you let go
     function nearest(v) { return scales.reduce((a, b) => Math.abs(b - v) < Math.abs(a - v) ? b : a) }
+    readonly property real minScale: scales[0]
     readonly property real maxScale: scales[scales.length - 1]
-    Timer { id: applyScale; interval: 450
-        onTriggered: if (p.mon && p.pending !== p.mon.scale) { apply.command = [p.tool, "set", "scale", String(p.pending)]; apply.running = true } }
+    property real dragPos: -1             // handle position while dragging (follows the mouse, not the snap)
+    function scalePos(v) { return maxScale > minScale ? (v - minScale) / (maxScale - minScale) : 0 }
+    function applyScaleNow() {
+        if (p.mon && Math.abs(p.pending - p.mon.scale) > 0.001) { apply.command = [p.tool, "set", "scale", String(p.pending)]; apply.running = true }
+    }
+    Timer { id: applyScale; interval: 600; onTriggered: p.applyScaleNow() }
     Heading { text: "SCALE"; value: (+p.pending.toFixed(2)) + "x" }
     Level {
-        value: p.maxScale > 1 ? (p.pending - 1) / (p.maxScale - 1) : 0
-        onMoved: v => { p.pending = p.nearest(1 + v * (p.maxScale - 1)); applyScale.restart() }
+        value: p.dragPos >= 0 ? p.dragPos : p.scalePos(p.pending)
+        onMoved: v => {
+            if (dragging) {
+                p.dragPos = v
+                p.pending = p.nearest(p.minScale + v * (p.maxScale - p.minScale))
+            } else {                   // scroll wheel: one supported scale per notch, applied after a short pause
+                const i = p.scales.indexOf(p.nearest(p.pending)) + (v > p.scalePos(p.pending) ? 1 : -1)
+                p.pending = p.scales[Math.max(0, Math.min(p.scales.length - 1, i))]
+                applyScale.restart()
+            }
+        }
+        onReleased: { p.dragPos = -1; applyScale.stop(); p.applyScaleNow() }
     }
 
     // HDR is never switched on by apps (cm_auto_hdr = 0); it's on all the time or off all the time

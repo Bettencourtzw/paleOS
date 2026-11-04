@@ -1,9 +1,11 @@
 import QtQuick
-// Simple slider 0..1. Drag, click or scroll.
+// Simple slider 0..1. Drag, click or scroll. `released` fires when you let go.
 Item {
     id: s
     property real value: 0
+    property bool dragging: false
     signal moved(real v)
+    signal released()
     width: parent ? parent.width : 200
     height: 18
     function set(x) { s.moved(Math.max(0, Math.min(1, x / width))) }
@@ -14,8 +16,10 @@ Item {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
         preventStealing: true          // the page can't steal the drag and start scrolling
-        onPressed: e => s.set(e.x)
+        onPressed: e => { s.dragging = true; s.set(e.x) }
         onPositionChanged: e => { if (pressed) s.set(e.x) }
+        onReleased: { s.dragging = false; s.released() }
+        onCanceled: { s.dragging = false; s.released() }
         onWheel: e => s.moved(Math.max(0, Math.min(1, s.value + (e.angleDelta.y > 0 ? 0.05 : -0.05))))
     }
 }

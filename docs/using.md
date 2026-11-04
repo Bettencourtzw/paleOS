@@ -80,7 +80,7 @@ network, sound, display. Each icon opens a small panel; click outside it or pres
 | Sound | Volume, mute, output device, microphone |
 | Network | Ethernet/Wi-Fi status, Wi-Fi networks (with password entry), speed test |
 | Bluetooth | On/off, paired devices, scan for new ones |
-| Display | Resolution and refresh rate (dropdowns with your monitor's supported modes), scale, night light, the settings file |
+| Display | Resolution and refresh rate (dropdowns with your monitor's supported modes), scale (every sharp scale your monitor supports, applied when you let go), HDR, night light, the settings file |
 
 ## Keys
 
