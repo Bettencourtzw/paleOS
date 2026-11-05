@@ -68,6 +68,11 @@ hl.on("monitor.added", new_monitors)
 -- waybar, hypridle and the paleOS shell (panels + password dialog) run as systemd user services so
 -- they restart if they crash; these small helpers just start with the session.
 hl.on("hyprland.start", function()
+    -- screen sharing (Discord, browsers, OBS): if anything asked for the desktop portal before Hyprland was
+    -- up, it started without knowing the desktop and has no screen capture; restart it with Hyprland's env
+    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE DISPLAY"
+        .. " && systemctl --user stop xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk"
+        .. "; systemctl --user reset-failed; systemctl --user start xdg-desktop-portal")
     hl.exec_cmd("mako")
     hl.exec_cmd("swayosd-server")
     hl.exec_cmd("hyprpaper")
