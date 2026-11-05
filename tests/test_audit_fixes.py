@@ -152,6 +152,35 @@ class AuditFixes(unittest.TestCase):
             self.assertNotIn('unexpected',run.stdout)
         lua=(ROOT/'config/hypr/hyprland.lua').read_text()
         self.assertLess(lua.index('recover-boot'),lua.index('load(monitors_file)'))
+        self.assertLess(lua.index('.pending'),lua.index('recover-boot'))   # Python only starts when needed
+
+    def test_recover_boot_never_waits_for_a_live_preview_lock(self):
+        # Hyprland runs recover-boot while `display set` holds the lock and waits on `hyprctl reload`
+        import fcntl
+        with tempfile.TemporaryDirectory() as tmp:
+            h=Path(tmp); config=h/'.config/hypr/monitors.lua'; config.parent.mkdir(parents=True)
+            config.write_text('candidate')
+            Path(str(config)+'.pending').write_text(json.dumps({'token':'test','deadline':0,'boot':'previous-boot','original':'original','candidate':'candidate'}))
+            with open(str(config)+'.lock','w') as held:
+                fcntl.flock(held, fcntl.LOCK_EX)
+                run=subprocess.run([ROOT/'bin/display','recover-boot'],env=self.env(h),capture_output=True,text=True,timeout=5)
+            self.assertEqual(run.returncode,0,run.stderr)
+            self.assertEqual(config.read_text(),'candidate')
+
+    def test_watcher_waits_for_a_deadline_extended_by_a_later_change(self):
+        import time
+        with tempfile.TemporaryDirectory() as tmp:
+            h=Path(tmp); config=h/'.config/hypr/monitors.lua'; config.parent.mkdir(parents=True)
+            config.write_text('candidate'); pend=Path(str(config)+'.pending')
+            pend.write_text(json.dumps({'token':'t','deadline':time.time()+1,'original':'original','candidate':'candidate'}))
+            self.fake(h,'hyprctl','exit 0')
+            w=subprocess.Popen([ROOT/'bin/display','watch','t'],env=self.env(h))
+            time.sleep(0.5)
+            pend.write_text(json.dumps({'token':'t','deadline':time.time()+1.5,'original':'original','candidate':'candidate'}))
+            time.sleep(1)
+            self.assertEqual(config.read_text(),'candidate')    # first deadline passed, but it was extended
+            w.wait(timeout=5)
+            self.assertEqual(config.read_text(),'original')
 
     def test_ssh_install_enables_firewall_after_allowing_management_peer(self):
         source=(ROOT/'install/system.sh').read_text()

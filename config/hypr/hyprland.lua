@@ -8,8 +8,9 @@ local home = os.getenv("HOME")
 -- The first time a monitor is connected it gets its highest resolution that does 60 Hz (a monitor that
 -- can't do 60 gets the rate closest to it), saved to monitors.lua. From then on the saved line is used.
 -- Restore an interrupted preview before reading monitor rules after a reboot.
-os.execute('"$HOME/.local/bin/display" recover-boot')
 local monitors_file = home .. "/.config/hypr/monitors.lua"
+local preview = io.open(monitors_file .. ".pending")
+if preview then preview:close(); os.execute('"$HOME/.local/bin/display" recover-boot') end
 local named, set_monitor = {}, hl.monitor
 hl.monitor = function(spec)
     if type(spec) == "table" and spec.output and spec.output ~= "" then named[spec.output] = true end

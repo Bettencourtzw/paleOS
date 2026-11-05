@@ -40,7 +40,6 @@ install -m755 bin/* ~/.local/bin/
 rm -f ~/.local/bin/pale-apps                                  # lives in /usr/local/bin
 cp -a share/. ~/.local/share/ && cp -n wallpapers/* ~/Wallpapers/
 [[ -e $C/hypr/wallpaper || -L $C/hypr/wallpaper ]] || ln -sfn ~/Wallpapers/arch-dark.png "$C/hypr/wallpaper"
-sed -i "s|\$HOME|$HOME|" "$C/hypr/hyprpaper.conf"
 
 # 3. keyboard layout for the desktop
 sed -i "s|kb_layout = \"us\",|kb_layout = \"$layout\",\n    kb_variant = \"$variant\",|" "$C/hypr/hyprland.lua"

@@ -2,7 +2,15 @@
 """Launch a desktop file using GLib's parser without stale D-Bus activation."""
 import os
 import sys
+import gi
+gi.require_version("Gio", "2.0")
 from gi.repository import Gio, GLib
+try:                                     # GLib 2.86+: the desktop-file API moved to GioUnix
+    gi.require_version("GioUnix", "2.0")
+    from gi.repository import GioUnix
+    DesktopAppInfo = GioUnix.DesktopAppInfo
+except (ImportError, ValueError):
+    DesktopAppInfo = Gio.DesktopAppInfo
 
 path = os.path.abspath(sys.argv[1])
 entry = GLib.KeyFile()
@@ -14,7 +22,7 @@ entry.set_boolean(group, "DBusActivatable", False)
 ok, args = GLib.shell_parse_argv(entry.get_string(group, "Exec"))
 args = [path.replace("%", "%%") if arg == "%k" else arg for arg in args]
 entry.set_string(group, "Exec", " ".join(arg if arg in ("%c", "%i", "%f", "%F", "%u", "%U") else GLib.shell_quote(arg) for arg in args))
-app = Gio.DesktopAppInfo.new_from_keyfile(entry)
+app = DesktopAppInfo.new_from_keyfile(entry)
 if app is None:
     sys.exit("Invalid desktop entry: " + path)
 context = Gio.AppLaunchContext()

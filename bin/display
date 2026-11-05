@@ -114,6 +114,7 @@ def save(m, changes):
                  "deadline": time.time() + 20, "token": uuid.uuid4().hex,
                  "boot": Path("/proc/sys/kernel/random/boot_id").read_text() if Path("/proc/sys/kernel/random/boot_id").exists() else "unknown"}
     state["candidate"] = text
+    state["deadline"] = time.time() + 20
     Path(FILE).parent.mkdir(parents=True, exist_ok=True)
     Path(PENDING).write_text(json.dumps(state))
     if first:
@@ -136,8 +137,6 @@ def main(a):
         boot = Path("/proc/sys/kernel/random/boot_id").read_text() if Path("/proc/sys/kernel/random/boot_id").exists() else "unknown"
         if state and (state.get("boot") != boot or state["deadline"] <= time.time()): revert(reload=False)
         return
-    if a[:1] == ["watch"]:
-        return revert(a[1])
     if a == ["revert"]: return revert()
     state = pending()
     if state and state["deadline"] <= time.time(): revert(); state = None
@@ -173,10 +172,30 @@ def main(a):
         save(m, {"sdr_max_luminance": max(80, min(400, int(float(a[2]))))})
     else: print(__doc__); sys.exit(2)
 
-if __name__ == "__main__":
-    # An independent systemd user service restores the file even when the panel or compositor disappears.
-    if sys.argv[1:2] == ["watch"]: time.sleep(20)
+def lock(wait=True):
     Path(FILE).parent.mkdir(parents=True, exist_ok=True)
-    with open(FILE + ".lock", "w") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
-        main(sys.argv[1:])
+    f = open(FILE + ".lock", "w")
+    try: fcntl.flock(f, fcntl.LOCK_EX | (0 if wait else fcntl.LOCK_NB))
+    except BlockingIOError: f.close(); return None
+    return f
+
+def watch(token):
+    # An independent systemd user service restores the file even when the panel or compositor disappears.
+    # Each further change restarts the 20 s, so it sleeps until the latest deadline, then checks under the lock.
+    while True:
+        state = pending()
+        if not state or state["token"] != token: return
+        time.sleep(max(0, state["deadline"] - time.time()))
+        with lock():
+            state = pending()
+            if state and state["token"] == token and state["deadline"] <= time.time(): return revert(token)
+
+if __name__ == "__main__":
+    a = sys.argv[1:]
+    if a[:1] == ["watch"] and len(a) == 2: watch(a[1]); sys.exit()
+    # recover-boot runs inside Hyprland's config load: if `display set` holds the lock it is waiting for
+    # that very reload, so waiting here would freeze the compositor. A held lock means a live preview,
+    # not an interrupted one, so there is nothing to recover.
+    l = lock(wait=a != ["recover-boot"])
+    if l is None: sys.exit()
+    with l: main(a)
