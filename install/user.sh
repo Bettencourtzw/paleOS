@@ -51,6 +51,9 @@ for a in nm-applet blueman; do printf '[Desktop Entry]\nType=Application\nName=%
 # apps that run in a terminal (Neovim, btop…) opened from "Open with": the terminal they open in.
 # foot unless you chose another one (one .desktop name per line, first match wins)
 [[ -e $C/xdg-terminals.list ]] || echo foot.desktop > "$C/xdg-terminals.list"
+# ~/.local/bin on the PATH of the session's background services too (panels, dock, D-Bus-started apps)
+mkdir -p "$C/environment.d"
+echo 'PATH=$HOME/.local/bin:$PATH' > "$C/environment.d/10-paleos-path.conf"
 # system info (fastfetch) at the top of every new terminal; delete the line in ~/.bashrc to turn it off
 grep -q fastfetch ~/.bashrc 2>/dev/null || echo '[[ $- == *i* ]] && command -v fastfetch >/dev/null && fastfetch' >> ~/.bashrc
 

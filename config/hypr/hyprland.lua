@@ -87,6 +87,9 @@ hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 hl.env("MESA_SHADER_CACHE_MAX_SIZE", "12G")   -- fewer shader stutters in games
 -- include Flatpak apps everywhere (menus, portals, file "open with")
+-- your own commands in ~/.local/bin start from the menu, dock and .desktop files (not only in a terminal)
+local path = os.getenv("PATH") or "/usr/local/bin:/usr/bin"
+if not (":" .. path .. ":"):find(":" .. home .. "/.local/bin:", 1, true) then hl.env("PATH", home .. "/.local/bin:" .. path) end
 hl.env("XDG_DATA_DIRS", home .. "/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share")
 -- NVIDIA-only PCs: video decoding (VA-API) and OpenGL on the NVIDIA driver. Skipped on laptops that
 -- also have an Intel/AMD GPU, so apps don't all wake up the NVIDIA card.
