@@ -3,7 +3,7 @@
 import json, os, re, subprocess
 
 H = os.path.expanduser
-S = {"barPosition": "top", "gaps": 12, "rounding": 10, "borderSize": 2, "blur": True, "animations": True,
+S = {"barPosition": "top", "gaps": 12, "rounding": 10, "borderSize": 2, "blur": True, "animations": True, "terminalOpacity": 1,
      "screensaverMinutes": 5, "lockMinutes": 10, "suspendMinutes": 0}
 try: S.update(json.load(open(H("~/.config/paleos/settings.json"))))
 except (OSError, ValueError): pass
@@ -42,3 +42,9 @@ if os.path.exists(wb):
     n = re.sub(rf'"margin-{other}": (\d+)', rf'"margin-{pos}": \1', n)
     if write_if_changed(wb, n):
         subprocess.run(["systemctl", "--user", "restart", "waybar"])
+
+# terminal background opacity -> foot.ini (new terminal windows)
+ft = H("~/.config/foot/foot.ini")
+if os.path.exists(ft):
+    a = min(1.0, max(0.5, float(S["terminalOpacity"] or 1)))
+    write_if_changed(ft, re.sub(r"(?m)^alpha=.*$", f"alpha={a:g}", open(ft).read()))

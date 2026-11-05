@@ -40,6 +40,7 @@ Singleton {
             property int rounding: 10
             property int borderSize: 2
             property bool blur: true
+            property real terminalOpacity: 1     // terminal (foot) background, 0.5 … 1
             property bool animations: true
             property bool windowHeaders: true     // header with buttons when pointing at a window's top edge
             property int headerHeight: 32         // 24 … 44

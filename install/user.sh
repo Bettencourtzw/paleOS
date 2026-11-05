@@ -42,6 +42,8 @@ for a in nm-applet blueman; do printf '[Desktop Entry]\nType=Application\nName=%
 # apps that run in a terminal (Neovim, btop…) opened from "Open with": the terminal they open in.
 # foot unless you chose another one (one .desktop name per line, first match wins)
 [[ -e $C/xdg-terminals.list ]] || echo foot.desktop > "$C/xdg-terminals.list"
+# system info (fastfetch) at the top of every new terminal; delete the line in ~/.bashrc to turn it off
+grep -q fastfetch ~/.bashrc 2>/dev/null || echo '[[ $- == *i* ]] && command -v fastfetch >/dev/null && fastfetch' >> ~/.bashrc
 
 # 5. user services (symlinks, so this also works inside the ISO installer's chroot)
 U=$C/systemd/user; W=$U/graphical-session.target.wants

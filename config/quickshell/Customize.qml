@@ -178,6 +178,7 @@ FloatingWindow {
                 Setting { text: "Border around the active window"; from: 0; to: 6; value: win.s.borderSize; shown: win.s.borderSize + " px"; onChanged: v => win.set("borderSize", Math.round(v)) }
                 Setting { text: "Gaps between windows"; from: 0; to: 24; value: win.s.gaps; shown: win.s.gaps + " px"; onChanged: v => win.set("gaps", Math.round(v)) }
                 Setting { text: "Rounded corners"; from: 0; to: 20; value: win.s.rounding; shown: win.s.rounding + " px"; onChanged: v => win.set("rounding", Math.round(v)) }
+                Setting { text: "Terminal background opacity"; from: 0.5; to: 1; value: win.s.terminalOpacity || 1; shown: Math.round((win.s.terminalOpacity || 1) * 100) + "%"; onChanged: v => win.set("terminalOpacity", Math.round(v * 20) / 20) }
                 Switcher { text: "Blur behind see-through windows"; checked: win.s.blur; onToggled: win.set("blur", !win.s.blur) }
                 Switcher { text: "Animations"; checked: win.s.animations; onToggled: win.set("animations", !win.s.animations) }
             }

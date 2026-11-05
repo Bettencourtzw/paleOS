@@ -1,0 +1,9 @@
+// fastfetch — system info shown at the top of new terminals, in paleOS colors.
+// Options: https://github.com/fastfetch-cli/fastfetch/wiki/Configuration
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": { "color": { "1": "#e6e6e6", "2": "#7a7a7a" } },
+  "display": {
+    "color": { "keys": "#e6e6e6", "title": "#e6e6e6", "output": "#bababa", "separator": "#7a7a7a" }
+  }
+}

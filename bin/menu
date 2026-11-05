@@ -29,7 +29,7 @@ learn)
 
 
 install)
-  [ -z "$pick" ] && { row package "Package"; row package "AUR package"; row web "Browser"; row edit "Editor"; row trigger "Terminal"
+  [ -z "$pick" ] && { row package "Package"; row package "AUR package"; row package "Apps"; row web "Browser"; row edit "Editor"; row trigger "Terminal"
                       row keys "Development"; row display "Gaming"; row web "Web App"; row restart "Service"; row package "AUR helper (yay)"; exit; }
   case "$pick" in
     "Package") term 'pacman -Slq | fzf --multi --preview "pacman -Si {}" --prompt "Install > " | xargs -ro sudo pacman -S --needed' ;;
@@ -39,9 +39,10 @@ install)
     *) echo "GOTO:install-${pick,,}" ;;
   esac ;;
 
-install-browser|install-editor|install-terminal|install-development|install-gaming|install-service)
+install-apps|install-browser|install-editor|install-terminal|install-development|install-gaming|install-service)
   # "Label|how" — how: pac <pkgs> · aur <pkgs> · run <shell command>
   case "$sec" in
+    install-apps) list=("Calculator|pac gnome-calculator") ;;
     install-browser) list=("Firefox|pac firefox" "Chromium|pac chromium" "Brave|aur brave-bin" "Zen Browser|aur zen-browser-bin" "Google Chrome|aur google-chrome") ;;
     install-editor) list=("VS Code (open source)|pac code" "Zed|pac zed" "Helix|pac helix" "Neovim + LazyVim|run sudo pacman -S --needed neovim git ripgrep fd lazygit && [ ! -e ~/.config/nvim ] && git clone https://github.com/LazyVim/starter ~/.config/nvim && rm -rf ~/.config/nvim/.git") ;;
     install-terminal) list=("Ghostty|pac ghostty" "Alacritty|pac alacritty" "Kitty|pac kitty" "WezTerm|pac wezterm") ;;
