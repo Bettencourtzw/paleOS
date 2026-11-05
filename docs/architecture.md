@@ -14,7 +14,7 @@ paleOS is small on purpose: standard Arch packages, configured with plain files.
 | App index for the menu | `pale-apps` (Rust, no dependencies) | `tools/pale-apps/` |
 | Monitor settings helper | `bin/display` (used by menu and panel) | `bin/` |
 | Notifications / OSD | mako, swayosd | `config/mako/` |
-| Lock / idle / wallpaper | hyprlock, hypridle, hyprpaper | `config/hypr/` |
+| Lock / idle / wallpaper | hyprlock, hypridle, swaybg | `config/hypr/` |
 | Screensaver | Quickshell overlay (`Screensaver.qml`) | `config/quickshell/` |
 | Login screen | SDDM theme (QML) | `themes/sddm-arch-dark/` |
 | Boot splash | Plymouth script theme | `themes/plymouth-arch-dark/` |
@@ -35,4 +35,4 @@ terminal only redraws what changed, so a rewrite wouldn't be noticeable.
 
 `waybar`, `hypridle` and `paleos-shell` (Quickshell) run as systemd user services so they restart if they
 crash. `paleos-hypr-reload.path` reloads Hyprland when `monitors.lua` or `bindings.lua` is saved
-(Hyprland itself only watches `hyprland.lua`). mako, swayosd and hyprpaper are started by Hyprland at login.
+(Hyprland itself only watches `hyprland.lua`). mako, swayosd and swaybg are started by Hyprland at login.

@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+"""Launch a desktop file using GLib's parser without stale D-Bus activation."""
+import os
+import sys
+import gi
+gi.require_version("Gio", "2.0")
+from gi.repository import Gio, GLib
+try:                                     # GLib 2.86+: the desktop-file API moved to GioUnix
+    gi.require_version("GioUnix", "2.0")
+    from gi.repository import GioUnix
+    DesktopAppInfo = GioUnix.DesktopAppInfo
+except (ImportError, ValueError):
+    DesktopAppInfo = Gio.DesktopAppInfo
+
+path = os.path.abspath(sys.argv[1])
+entry = GLib.KeyFile()
+entry.load_from_file(path, GLib.KeyFileFlags.NONE)
+group = "Desktop Entry"
+entry.set_boolean(group, "DBusActivatable", False)
+# A keyfile-backed AppInfo has no filename. Supply %k before passing it to GLib.
+# Field codes are standalone arguments; %% remains for GLib to expand exactly once.
+ok, args = GLib.shell_parse_argv(entry.get_string(group, "Exec"))
+args = [path.replace("%", "%%") if arg == "%k" else arg for arg in args]
+entry.set_string(group, "Exec", " ".join(arg if arg in ("%c", "%i", "%f", "%F", "%u", "%U") else GLib.shell_quote(arg) for arg in args))
+app = DesktopAppInfo.new_from_keyfile(entry)
+if app is None:
+    sys.exit("Invalid desktop entry: " + path)
+context = Gio.AppLaunchContext()
+context.setenv("GIO_LAUNCHED_DESKTOP_FILE", path)
+if not app.launch([], context):
+    sys.exit("Could not launch: " + path)

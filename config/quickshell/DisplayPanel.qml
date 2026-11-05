@@ -38,6 +38,11 @@ Panel {
     Timer { id: settle; interval: 600; onTriggered: p.refresh() }
     function setMode(resolution, hz) { p.run(["set", "mode", resolution + "@" + hz]) }
 
+    Timer { interval: 1000; repeat: true; running: p.open && p.mon && p.mon.confirmSeconds > 0; onTriggered: p.refresh() }
+    Heading { visible: p.mon && p.mon.confirmSeconds > 0; text: "KEEP THESE SETTINGS?"; value: p.mon ? p.mon.confirmSeconds + " s" : "" }
+    Entry { visible: p.mon && p.mon.confirmSeconds > 0; text: "Keep display settings"; onClicked: p.run(["confirm"]) }
+    Entry { visible: p.mon && p.mon.confirmSeconds > 0; text: "Revert now"; onClicked: p.run(["revert"]) }
+
     Heading { text: "RESOLUTION" }
     Dropdown {
         model: p.resList
@@ -67,6 +72,7 @@ Panel {
     Timer { id: applyScale; interval: 600; onTriggered: p.applyScaleNow() }
     Heading { text: "SCALE"; value: (+p.pending.toFixed(2)) + "x" }
     Level {
+        accessibleName: "Display scale"
         value: p.dragPos >= 0 ? p.dragPos : p.scalePos(p.pending)
         onMoved: v => {
             if (dragging) {
@@ -85,7 +91,8 @@ Panel {
     // HDR is never switched on by apps (cm_auto_hdr = 0); it's on all the time or off all the time
     Heading { text: "HDR" }
     Switcher {
-        text: "HDR (always on)"
+        text: p.mon && p.mon.hdrSupported ? "HDR (always on)" : "HDR unavailable on this monitor"
+        enabled: p.mon && (p.mon.hdrSupported || p.mon.hdr)
         checked: p.mon ? p.mon.hdr : false
         onToggled: p.run(["set", "hdr", p.mon && p.mon.hdr ? "off" : "on"])
     }
@@ -96,6 +103,7 @@ Panel {
         onTriggered: if (p.mon && p.sdrPending !== p.mon.sdr) p.run(["set", "sdr", String(p.sdrPending)]) }
     Heading { visible: p.mon && p.mon.hdr; text: "SDR BRIGHTNESS"; value: p.sdrPending + " nits" }
     Level {
+        accessibleName: "SDR brightness"
         visible: p.mon && p.mon.hdr
         value: (p.sdrPending - 80) / 320
         onMoved: v => { p.sdrPending = Math.round((80 + v * 320) / 10) * 10; applySdr.restart() }

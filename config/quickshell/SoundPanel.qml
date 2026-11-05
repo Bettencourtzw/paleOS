@@ -35,6 +35,7 @@ Panel {
         }
         Level {
             width: parent.width - 32
+            accessibleName: "Output volume"
             value: p.sink && p.sink.audio ? Math.min(1, p.sink.audio.volume) : 0
             onMoved: v => { if (p.sink && p.sink.audio) { p.sink.audio.muted = false; p.sink.audio.volume = v } }
         }
@@ -67,6 +68,7 @@ Panel {
         }
         Level {
             width: parent.width - 32
+            accessibleName: "Microphone volume"
             value: p.source && p.source.audio ? Math.min(1, p.source.audio.volume) : 0
             onMoved: v => { if (p.source && p.source.audio) { p.source.audio.muted = false; p.source.audio.volume = v } }
         }

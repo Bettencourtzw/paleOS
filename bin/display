@@ -12,9 +12,25 @@
 
 Settings are saved per monitor in ~/.config/hypr/monitors.lua, one line per output.
 """
-import json, os, re, subprocess, sys
+import fcntl, json, math, os, re, subprocess, sys, time, uuid
+from pathlib import Path
 
 FILE = os.path.expanduser("~/.config/hypr/monitors.lua")
+
+PENDING = FILE + ".pending"
+
+def pending():
+    try: return json.loads(Path(PENDING).read_text())
+    except FileNotFoundError: return None
+
+def revert(token=None, reload=True):
+    state = pending()
+    if not state or (token and token != state["token"]): return
+    if Path(FILE).read_text() != state["candidate"]:
+        sys.exit("Monitor file changed elsewhere; backup retained in " + PENDING)
+    Path(FILE).write_text(state["original"])
+    os.unlink(PENDING)
+    if reload: subprocess.run(["hyprctl", "reload"], capture_output=True)
 
 def focused():
     mons = json.loads(subprocess.run(["hyprctl", "monitors", "-j"], capture_output=True, text=True).stdout)
@@ -52,7 +68,7 @@ def mask(text):   # blank out comments and strings so the patterns below only se
                          if t.group().startswith(("--", '[', '"', "'")) and len(t.group()) > 1 else t.group(), text)
 
 def lua(value):
-    return f'"{value}"' if isinstance(value, str) else str(value)
+    return json.dumps(value, ensure_ascii=False) if isinstance(value, str) else str(value)
 
 def save(m, changes):
     text = open(FILE).read() if os.path.exists(FILE) else ""
@@ -61,8 +77,16 @@ def save(m, changes):
     entries = [(entry, fields(text[entry.start():entry.end()]).get("output")) for entry in pat.finditer(masked)]
     if len(re.findall(r'\bhl\.monitor\s*\(', masked)) != len(entries):
         sys.exit(f"Cannot safely identify the monitor in {FILE}; edit it manually.")
-    old = next((entry for entry, output in entries if output
-                and output[0].group() in (f'"{m["name"]}"', f"'{m['name']}'") and output[1] in (",", "}")), None)
+    def matches(output):
+        if not output or output[1] not in (",", "}"): return False
+        token = output[0].group()
+        if not token.startswith(('"', "'")): return False
+        selector = token[1:-1]
+        return selector == m["name"] or (selector.startswith("desc:") and
+            m.get("description", "").startswith(selector[5:]) and bool(selector[5:]))
+    matched = [entry for entry, output in entries if matches(output)]
+    if len(matched) > 1: sys.exit("Multiple monitor rules match; edit monitors.lua manually.")
+    old = matched[0] if matched else None
     if old:
         line = text[old.start():old.end()]
         for key, value in changes.items():
@@ -83,22 +107,63 @@ def save(m, changes):
         line = (f'hl.monitor({{ output = "{m["name"]}", position = "auto", vrr = 0, '
                 + ", ".join(f"{k} = {lua(v)}" for k, v in cur.items()) + " })")
         text = text.rstrip("\n") + "\n" + line + "\n"
-    open(FILE, "w").write(text)
-    subprocess.run(["hyprctl", "reload"], capture_output=True)
+    state = pending()
+    first = state is None
+    if first:
+        state = {"original": Path(FILE).read_text() if Path(FILE).exists() else "",
+                 "deadline": time.time() + 20, "token": uuid.uuid4().hex,
+                 "boot": Path("/proc/sys/kernel/random/boot_id").read_text() if Path("/proc/sys/kernel/random/boot_id").exists() else "unknown"}
+    state["candidate"] = text
+    state["deadline"] = time.time() + 20
+    Path(FILE).parent.mkdir(parents=True, exist_ok=True)
+    Path(PENDING).write_text(json.dumps(state))
+    if first:
+        try:
+            command = ["systemd-run", "--user", "--collect", "--quiet", "--property=Type=exec",
+                       "--unit=paleos-display-rollback-" + state["token"]]
+            for key in ("HOME", "PATH", "HYPRLAND_INSTANCE_SIGNATURE", "WAYLAND_DISPLAY"):
+                if key in os.environ: command.append("--setenv=" + key + "=" + os.environ[key])
+            subprocess.run(command + [sys.executable, os.path.realpath(__file__), "watch", state["token"]],
+                           stdin=subprocess.DEVNULL, capture_output=True, check=True)
+        except (OSError, subprocess.CalledProcessError):
+            os.unlink(PENDING)
+            raise
+    Path(FILE).write_text(text)
+    subprocess.run(["hyprctl", "reload"], capture_output=True, check=True)
 
 def main(a):
+    if a == ["recover-boot"]:
+        state = pending()
+        boot = Path("/proc/sys/kernel/random/boot_id").read_text() if Path("/proc/sys/kernel/random/boot_id").exists() else "unknown"
+        if state and (state.get("boot") != boot or state["deadline"] <= time.time()): revert(reload=False)
+        return
+    if a == ["revert"]: return revert()
+    state = pending()
+    if state and state["deadline"] <= time.time(): revert(); state = None
+    if a == ["confirm"]:
+        if state: os.unlink(PENDING)
+        return
     m = focused()
     if a[:1] == ["info"]:
         i = {k: m[k] for k in ("name", "width", "height", "refreshRate", "scale")}
+        i["confirmSeconds"] = max(0, math.ceil(state["deadline"] - time.time())) if state else 0
+        i["hdrSupported"] = m.get("hardwareDetails", {}).get("hdr", False)
         i["hdr"] = m.get("colorManagementPreset", "") in ("hdr", "hdredid")
         i["sdr"] = round(m.get("sdrMaxLuminance", 80))
         print(json.dumps(i))
     elif a[:1] == ["rates"]:  print("\n".join(map(str, rates(m))))
     elif a[:1] == ["modes"]:  print(json.dumps(modes(m)))
     elif a[:1] == ["scales"]: print("\n".join(map(str, scales(m))))
-    elif a[:2] == ["set", "mode"] and len(a) == 3:  save(m, {"mode": a[2]})
-    elif a[:2] == ["set", "scale"] and len(a) == 3: save(m, {"scale": float(a[2])})
+    elif a[:2] == ["set", "mode"] and len(a) == 3:
+        if not re.fullmatch(r"[1-9]\d*x[1-9]\d*@\d+(?:\.\d+)?", a[2]): sys.exit("Invalid mode")
+        save(m, {"mode": a[2]})
+    elif a[:2] == ["set", "scale"] and len(a) == 3:
+        scale = float(a[2])
+        if not math.isfinite(scale) or not 0.25 <= scale <= 4: sys.exit("Invalid scale")
+        save(m, {"scale": scale})
     elif a[:2] == ["set", "hdr"] and a[2:] in (["on"], ["off"]):
+        if a[2] == "on" and not m.get("hardwareDetails", {}).get("hdr", False):
+            sys.exit("This monitor does not report HDR support.")
         # HDR the way it should look: the monitor's own colours (EDID), normal content at ~250 nits
         # with deep blacks and gamma 2.2 (Hyprland's defaults, 80 nits + sRGB curve, look dim and grey)
         save(m, {"cm": "hdredid", "bitdepth": 10, "sdr_eotf": "gamma22", "sdr_min_luminance": 0.005,
@@ -107,4 +172,30 @@ def main(a):
         save(m, {"sdr_max_luminance": max(80, min(400, int(float(a[2]))))})
     else: print(__doc__); sys.exit(2)
 
-main(sys.argv[1:])
+def lock(wait=True):
+    Path(FILE).parent.mkdir(parents=True, exist_ok=True)
+    f = open(FILE + ".lock", "w")
+    try: fcntl.flock(f, fcntl.LOCK_EX | (0 if wait else fcntl.LOCK_NB))
+    except BlockingIOError: f.close(); return None
+    return f
+
+def watch(token):
+    # An independent systemd user service restores the file even when the panel or compositor disappears.
+    # Each further change restarts the 20 s, so it sleeps until the latest deadline, then checks under the lock.
+    while True:
+        state = pending()
+        if not state or state["token"] != token: return
+        time.sleep(max(0, state["deadline"] - time.time()))
+        with lock():
+            state = pending()
+            if state and state["token"] == token and state["deadline"] <= time.time(): return revert(token)
+
+if __name__ == "__main__":
+    a = sys.argv[1:]
+    if a[:1] == ["watch"] and len(a) == 2: watch(a[1]); sys.exit()
+    # recover-boot runs inside Hyprland's config load: if `display set` holds the lock it is waiting for
+    # that very reload, so waiting here would freeze the compositor. A held lock means a live preview,
+    # not an interrupted one, so there is nothing to recover.
+    l = lock(wait=a != ["recover-boot"])
+    if l is None: sys.exit()
+    with l: main(a)

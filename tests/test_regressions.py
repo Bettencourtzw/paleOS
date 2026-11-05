@@ -4,11 +4,23 @@ import pathlib
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 class Regressions(unittest.TestCase):
+    def setUp(self):
+        # CLI fixtures exercise file edits; the independent watchdog is checked in the desktop VM.
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        command = pathlib.Path(tmp.name) / "systemd-run"
+        command.write_text("#!/bin/sh\nexit 0\n")
+        command.chmod(0o755)
+        env = patch.dict(os.environ, {"PATH": tmp.name + ":" + os.environ["PATH"]})
+        env.start()
+        self.addCleanup(env.stop)
+
     def test_display_lists_low_refresh_modes(self):
         monitor = {"width": 1920, "height": 1080, "availableModes": ["3840x2160@30.00Hz", "1920x1080@60.00Hz", "1920x1080@50.00Hz"]}
         with tempfile.TemporaryDirectory() as tmp:
@@ -167,7 +179,8 @@ class Regressions(unittest.TestCase):
             launcher.chmod(0o755)
             capture = pathlib.Path(tmp) / "command"
             subprocess.run([ROOT / "bin/menu", "install-gaming", "Steam"], env={**os.environ, "PATH": tmp + ":" + os.environ["PATH"], "CAPTURE": str(capture)}, capture_output=True, text=True, check=True)
-            self.assertIn("pacman -Syu --needed steam", capture.read_text())
+            self.assertIn("sudo ~/.local/bin/paleos-gaming", capture.read_text())
+            self.assertIn('pacman -Syu --needed "${pkgs[@]}"', (ROOT / "bin/paleos-gaming").read_text())
 
     def test_erased_disk_finds_reused_partition_numbers(self):
         source = (ROOT / "iso/airootfs/usr/local/bin/paleos-setup").read_text()

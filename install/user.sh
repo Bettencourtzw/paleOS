@@ -1,11 +1,21 @@
 #!/usr/bin/env bash
 # paleOS — user part (run as your normal user). Puts configs, scripts and wallpapers in place.
 # Re-running is safe: old configs are moved to a backup, your monitor + wallpaper choices are kept.
-# Env: PALEOS_KEYMAP=<console keymap, e.g. pt-latin1>   (otherwise taken from localectl)
+# Env: PALEOS_XKB_LAYOUT / PALEOS_XKB_VARIANT (otherwise taken from localectl)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 [[ $EUID -ne 0 ]] || { echo "install/user.sh must run as your normal user."; exit 1; }
-C=~/.config; backup=$C/paleos-backup-$(date +%Y%m%d-%H%M%S)
+# localectl uses systemd's maintained console-to-XKB mapping, including variants.
+if [[ -n ${PALEOS_XKB_LAYOUT:-} ]]; then
+  layout=$PALEOS_XKB_LAYOUT; variant=${PALEOS_XKB_VARIANT:-}
+else
+  layout=$(localectl status 2>/dev/null | awk -F': ' '/X11 Layout/{print $2}')
+  variant=$(localectl status 2>/dev/null | awk -F': ' '/X11 Variant/{print $2}')
+  [[ -n $layout ]] || { echo "No XKB layout configured. Run sudo localectl set-keymap <keymap> first."; exit 1; }
+fi
+[[ $layout =~ ^[a-zA-Z0-9_,+-]+$ && $variant =~ ^[a-zA-Z0-9_,+-]*$ ]] || { echo "Invalid XKB layout/variant"; exit 1; }
+
+C=~/.config; backup=$C/paleos-backup-$(date +%Y%m%d-%H%M%S)-$$
 mkdir -p "$C"
 
 # 1. configs: move the old ones aside, copy fresh ones
@@ -22,18 +32,17 @@ done
 
 # 2. scripts, icons, wallpapers
 mkdir -p ~/.local/bin ~/.local/lib ~/.local/share ~/Wallpapers
+mkdir -p "$backup/bin"
+for f in bin/*; do
+  [[ ! -e ~/.local/bin/${f##*/} ]] || cp -a ~/.local/bin/"${f##*/}" "$backup/bin/"
+done
 install -m755 bin/* ~/.local/bin/
 rm -f ~/.local/bin/pale-apps                                  # lives in /usr/local/bin
 cp -a share/. ~/.local/share/ && cp -n wallpapers/* ~/Wallpapers/
 [[ -e $C/hypr/wallpaper || -L $C/hypr/wallpaper ]] || ln -sfn ~/Wallpapers/arch-dark.png "$C/hypr/wallpaper"
-sed -i "s|\$HOME|$HOME|" "$C/hypr/hyprpaper.conf"
 
 # 3. keyboard layout for the desktop
-km=${PALEOS_KEYMAP:-$(localectl status 2>/dev/null | awk -F': ' '/X11 Layout/{print $2}')}
-km=${km%%-*}
-case $km in uk) km=gb ;; sv) km=se ;; sg) km=ch ;; cf) km=ca ;; la) km=latam ;; jp106) km=jp ;; dvorak) km=us ;; esac
-km=${km:-us}
-sed -i "s|kb_layout = \"us\",|kb_layout = \"$km\",|" "$C/hypr/hyprland.lua"
+sed -i "s|kb_layout = \"us\",|kb_layout = \"$layout\",\n    kb_variant = \"$variant\",|" "$C/hypr/hyprland.lua"
 
 # 4. tray applets that duplicate paleOS's own panels (network, Bluetooth): keep them from autostarting
 mkdir -p "$C/autostart"

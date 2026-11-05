@@ -16,17 +16,31 @@ Scope {
     readonly property int hh: s.headerHeight || 32
     readonly property int inside: 2           // the strip also covers the window's top 2 px (easy to hit)
 
-    // window positions: refresh on Hyprland events, and every 0.4 s for resizes and mouse moves (they send
-    // no event), so a strip never sits where a window used to be
-    readonly property var events: ["openwindow", "closewindow", "movewindowv2", "changefloatingmode", "fullscreen",
+    // Window positions refresh on compositor events. While a usable header exists, a low-rate fallback also
+    // catches geometry changes that some Hyprland versions do not report.
+    readonly property var events: ["openwindow", "closewindow", "movewindowv2", "resizewindowv2", "changefloatingmode", "fullscreen",
                                    "workspacev2", "activewindowv2", "focusedmonv2", "windowtitlev2", "pin", "moveworkspacev2", "activespecial", "configreloaded"]
+    readonly property bool shouldPoll: {
+        if (!root.on) return false
+        const objects = Hyprland.toplevels.values.map(t => t.lastIpcObject).filter(o => o && o.at && o.size && o.workspace
+            && o.mapped !== false && !o.hidden)
+        for (let i = 0; i < Quickshell.screens.length; ++i) {
+            const mon = Hyprland.monitorFor(Quickshell.screens[i])
+            const mi = mon && mon.lastIpcObject ? mon.lastIpcObject : null
+            if (!mi || (mi.specialWorkspace && mi.specialWorkspace.name)) continue
+            const wsId = mon.activeWorkspace ? mon.activeWorkspace.id : -1
+            const visible = objects.filter(o => o.workspace.id === wsId)
+            if (!visible.some(o => o.fullscreen > 0) && visible.some(o => o.size[0] >= 160 && o.size[1] >= 60)) return true
+        }
+        return false
+    }
     Connections {
         target: Hyprland
         enabled: root.on
         function onRawEvent(e) { if (root.events.includes(e.name)) refresh.restart() }
     }
     Timer { id: refresh; interval: 40; onTriggered: root.refreshAll() }
-    Timer { interval: 400; repeat: true; running: root.on; onTriggered: root.refreshAll() }
+    Timer { interval: 400; repeat: true; running: root.shouldPoll; onTriggered: root.refreshAll() }
     function refreshAll() { Hyprland.refreshMonitors(); Hyprland.refreshToplevels() }   // monitors: bar size, scratchpad
     Component.onCompleted: { Hyprland.refreshMonitors(); Hyprland.refreshToplevels() }
 

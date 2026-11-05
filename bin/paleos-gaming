@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Shared Steam setup for the ISO and the desktop menu.
+set -euo pipefail
+[[ $EUID -eq 0 || ${PALEOS_GAMING_DRYRUN:-} == 1 ]] || exec sudo bash "$0" "$@"
+gpu=$(lspci -nn | grep -E '(VGA|3D|Display)' || true)
+pkgs=(steam gamemode lib32-gamemode)
+supported=0
+if [[ $gpu == *'[1002:'* ]]; then pkgs+=(vulkan-radeon lib32-vulkan-radeon); supported=1; fi
+if [[ $gpu == *'[8086:'* ]]; then pkgs+=(vulkan-intel lib32-vulkan-intel); supported=1; fi
+if [[ $gpu == *'[10de:'* ]]; then
+  installed=$(pacman -Qq || true)
+  utils=$(grep -E '^nvidia-utils(-beta)?$|^nvidia-[0-9]+xx-utils$' <<<"$installed" || true)
+  if [[ $utils == nvidia-utils ]]; then
+    pkgs+=(nvidia-utils lib32-nvidia-utils); supported=1
+  elif [[ $utils == nvidia-utils-beta || $utils =~ ^nvidia-[0-9]+xx-utils$ ]]; then
+    lib32="lib32-$utils"
+    version=$(pacman -Q "$utils" | awk '{print $2}')
+    version32=$(pacman -Q "$lib32" 2>/dev/null | awk '{print $2}' || true)
+    if [[ -n $version && ${version%-*} == "${version32%-*}" ]]; then
+      supported=1  # Keep matching AUR variants out of the official-repository transaction.
+    elif [[ $supported == 0 ]]; then
+      echo "Install matching $utils and $lib32 versions before installing Steam."; exit 2
+    fi
+  elif [[ $supported == 0 ]]; then
+    echo "Install matching NVIDIA and 32-bit Vulkan drivers for your driver series before installing Steam."; exit 2
+  fi
+fi
+[[ $supported == 1 ]] || { echo "No supported Vulkan GPU detected; configure its 64-bit and 32-bit Vulkan driver before installing Steam."; exit 2; }
+if [[ ${PALEOS_GAMING_DRYRUN:-} == 1 ]]; then printf '%s\n' "${pkgs[@]}"; exit; fi
+if ! grep -q '^\[multilib\]' /etc/pacman.conf; then
+  cp -a /etc/pacman.conf "/etc/pacman.conf.paleos-$(date +%s)"
+  sed -i '/^#\[multilib\]/{s/^#//;n;s/^#//}' /etc/pacman.conf
+fi
+grep -q '^\[multilib\]' /etc/pacman.conf || { echo "Enable multilib in /etc/pacman.conf first."; exit 1; }
+pacman -Syu --needed "${pkgs[@]}"

@@ -56,7 +56,19 @@ timezone=$(timedatectl list-timezones | gum filter --header "Timezone (detected:
 timezone=${timezone:-$guess_tz}
 
 title "Your account"
-hostname=$(ask "Computer name" "paleos")
+while :; do
+  hostname=$(ask "Computer name" "paleos")
+  [[ $hostname =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$ ]] && break
+  gum style --foreground 1 "Use 1–63 letters, digits or hyphens; start and end with a letter or digit."
+done
+[[ $timezone =~ ^[A-Za-z0-9_+/-]+$ && $timezone != *..* && -f /usr/share/zoneinfo/$timezone ]] || die "Invalid timezone."
+[[ $locale =~ ^[a-zA-Z0-9_.@-]+$ ]] && grep -qFx "$locale UTF-8" /usr/share/i18n/SUPPORTED || die "Invalid locale."
+[[ $keymap =~ ^[a-zA-Z0-9_+-]+$ ]] && localectl list-keymaps | grep -Fx "$keymap" >/dev/null || die "Invalid keyboard layout."
+localectl set-keymap "$keymap" || die "Cannot convert this keyboard layout for the desktop."
+xkb_layout=$(localectl status | awk -F': ' '/X11 Layout/{print $2}')
+xkb_variant=$(localectl status | awk -F': ' '/X11 Variant/{print $2}')
+[[ $xkb_layout =~ ^[a-zA-Z0-9_,+-]+$ && $xkb_variant =~ ^[a-zA-Z0-9_,+-]*$ ]] || die "Cannot determine desktop keyboard layout."
+
 while :; do username=$(ask "Username" "" "lowercase, no spaces"); [[ $username =~ ^[a-z_][a-z0-9_-]{0,31}$ ]] && break; gum style --foreground 1 "Use lowercase letters, digits, - or _"; done
 while :; do
   password=$(gum input --password --header "Password for $username")
@@ -146,7 +158,7 @@ fi
 mount "$esp" $MNT/boot
 
 # ---------- 4. base system --------------------------------------------------------
-pkgs="base $kernel $kernel-headers linux-firmware $ucode sudo networkmanager grub efibootmgr os-prober zram-generator neovim git $gpu_pkgs"
+pkgs="base $kernel $kernel-headers linux-firmware $ucode sudo networkmanager grub efibootmgr os-prober zram-generator neovim git pciutils $gpu_pkgs"
 [[ $fs == btrfs ]] && pkgs+=" btrfs-progs"
 [[ $snapshots == yes ]] && pkgs+=" snapper snap-pac grub-btrfs inotify-tools"
 has Bluetooth && pkgs+=" bluez bluez-utils"
@@ -187,7 +199,16 @@ run "Configuring the system" "arch-chroot $MNT bash /root/paleos-chroot.sh"
 printf '%s:%s\n' "$username" "$password" | arch-chroot $MNT chpasswd
 
 if has "Gaming"; then
-  run "Enabling multilib + installing Steam" "sed -i '/^#\\[multilib\\]/{s/^#//;n;s/^#//}' $MNT/etc/pacman.conf && arch-chroot $MNT pacman -Syu --noconfirm --needed steam gamemode lib32-gamemode $( grep -qi amd <<<"$gpu" && echo lib32-vulkan-radeon ) $( grep -qi intel <<<"$gpu" && echo lib32-vulkan-intel ) $( [[ $nvidia == yes ]] && echo lib32-nvidia-utils )"
+  install -m755 "$PALEOS_SRC/bin/paleos-gaming" "$MNT/root/paleos-gaming"
+  # Keep pacman's conflict/replacement questions visible.
+  if arch-chroot "$MNT" bash /root/paleos-gaming; then :
+  else
+    status=$?
+    if [[ $status == 2 ]]; then
+      echo "Steam deferred: install your matching graphics drivers, then run sudo ~/.local/bin/paleos-gaming after login."
+    else die "Steam setup failed."; fi
+  fi
+  rm -f "$MNT/root/paleos-gaming"
 fi
 if has "AUR helper"; then
   run "Installing yay (AUR helper)" "arch-chroot $MNT pacman -S --noconfirm --needed base-devel && arch-chroot $MNT runuser -u $username -- bash -c 'cd ~ && git clone --depth 1 https://aur.archlinux.org/yay-bin.git .yay-build && cd .yay-build && makepkg -s --noconfirm' && arch-chroot $MNT bash -c 'pacman -U --noconfirm /home/$username/.yay-build/yay-bin-*.pkg.tar.zst && rm -rf /home/$username/.yay-build'"
@@ -206,8 +227,8 @@ else
   echo "GitHub not reachable; installing the paleOS copy from the ISO" >>"$LOG"
 fi
   run "Copying paleOS" "cp -a $PALEOS_SRC $MNT/home/$username/.local-paleos && arch-chroot $MNT bash -c 'install -d -o $username -g $username /home/$username/.local /home/$username/.local/share && mv /home/$username/.local-paleos /home/$username/.local/share/paleOS && chown -R $username:$username /home/$username/.local/share/paleOS'"
-  run "Installing the paleOS desktop" "arch-chroot $MNT env SNAP_PAC_SKIP=y PALEOS_YES=1 PALEOS_USER=$username bash /home/$username/.local/share/paleOS/install/system.sh"
-  run "Setting up your desktop" "arch-chroot $MNT runuser -u $username -- env HOME=/home/$username PALEOS_KEYMAP=$keymap bash /home/$username/.local/share/paleOS/install/user.sh"
+  run "Installing the paleOS desktop" "arch-chroot $MNT env SNAP_PAC_SKIP=y PALEOS_CHROOT=1 PALEOS_YES=1 PALEOS_USER=$username bash /home/$username/.local/share/paleOS/install/system.sh"
+  run "Setting up your desktop" "arch-chroot $MNT runuser -u $username -- env HOME=/home/$username PALEOS_XKB_LAYOUT=$xkb_layout PALEOS_XKB_VARIANT=$xkb_variant bash /home/$username/.local/share/paleOS/install/user.sh"
 ln -sf /run/systemd/resolve/stub-resolv.conf $MNT/etc/resolv.conf   # private DNS (can't be linked from inside the chroot)
 rm -f $MNT/root/paleos-chroot.sh
 
