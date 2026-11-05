@@ -15,6 +15,7 @@ class AuditFixes(unittest.TestCase):
         path.chmod(0o755)
 
     def env(self, home):
+        self.fake(home, 'systemd-run', 'exit 0')
         return {**os.environ, 'HOME': str(home), 'PATH': str(home) + ':' + os.environ['PATH']}
 
     def test_update_without_success_receipt_retries_failure(self):
@@ -169,5 +170,19 @@ class AuditFixes(unittest.TestCase):
         base=next(line for line in source.splitlines() if line.startswith('pkgs="base '))
         self.assertIn('pciutils',base)
         self.assertLess(source.index('pacstrap -K'),source.index('bash /root/paleos-gaming'))
+
+    def test_legacy_nvidia_defers_steam_without_aborting_iso_install(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            h=Path(tmp)
+            self.fake(h,'lspci','echo "VGA NVIDIA GP104 [10de:1b80]"')
+            self.fake(h,'pacman','exit 0')
+            run=subprocess.run(['bash',ROOT/'bin/paleos-gaming'],env={**self.env(h),'PALEOS_GAMING_DRYRUN':'1'},capture_output=True,text=True)
+            self.assertEqual(run.returncode,2,run.stderr)
+        source=(ROOT/'iso/airootfs/usr/local/bin/paleos-setup').read_text()
+        block=source.split('  if arch-chroot "$MNT" bash /root/paleos-gaming;',1)[1].split('  rm -f "$MNT/root/paleos-gaming"',1)[0]
+        script='MNT=/unused; arch-chroot() { return 2; }; die() { exit 99; }; if arch-chroot "$MNT" bash /root/paleos-gaming;'+block
+        run=subprocess.run(['bash','-c',script],capture_output=True,text=True)
+        self.assertEqual(run.returncode,0,run.stderr)
+        self.assertIn('Steam deferred',run.stdout)
 
 if __name__ == '__main__': unittest.main()

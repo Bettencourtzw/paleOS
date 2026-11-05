@@ -201,7 +201,13 @@ printf '%s:%s\n' "$username" "$password" | arch-chroot $MNT chpasswd
 if has "Gaming"; then
   install -m755 "$PALEOS_SRC/bin/paleos-gaming" "$MNT/root/paleos-gaming"
   # Keep pacman's conflict/replacement questions visible.
-  arch-chroot "$MNT" bash /root/paleos-gaming || die "Steam setup failed."
+  if arch-chroot "$MNT" bash /root/paleos-gaming; then :
+  else
+    status=$?
+    if [[ $status == 2 ]]; then
+      echo "Steam deferred: install your matching graphics drivers, then run sudo ~/.local/bin/paleos-gaming after login."
+    else die "Steam setup failed."; fi
+  fi
   rm -f "$MNT/root/paleos-gaming"
 fi
 if has "AUR helper"; then

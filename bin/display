@@ -118,10 +118,13 @@ def save(m, changes):
     Path(PENDING).write_text(json.dumps(state))
     if first:
         try:
-            subprocess.Popen([sys.executable, os.path.realpath(__file__), "watch", state["token"]],
-                             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                             start_new_session=True)
-        except OSError:
+            command = ["systemd-run", "--user", "--collect", "--quiet", "--property=Type=exec",
+                       "--unit=paleos-display-rollback-" + state["token"]]
+            for key in ("HOME", "PATH", "HYPRLAND_INSTANCE_SIGNATURE", "WAYLAND_DISPLAY"):
+                if key in os.environ: command.append("--setenv=" + key + "=" + os.environ[key])
+            subprocess.run(command + [sys.executable, os.path.realpath(__file__), "watch", state["token"]],
+                           stdin=subprocess.DEVNULL, capture_output=True, check=True)
+        except (OSError, subprocess.CalledProcessError):
             os.unlink(PENDING)
             raise
     Path(FILE).write_text(text)
@@ -171,7 +174,7 @@ def main(a):
     else: print(__doc__); sys.exit(2)
 
 if __name__ == "__main__":
-    # A separate session restores the file even when the panel or compositor disappears.
+    # An independent systemd user service restores the file even when the panel or compositor disappears.
     if sys.argv[1:2] == ["watch"]: time.sleep(20)
     Path(FILE).parent.mkdir(parents=True, exist_ok=True)
     with open(FILE + ".lock", "w") as lock:

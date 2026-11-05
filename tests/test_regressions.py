@@ -4,11 +4,23 @@ import pathlib
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 class Regressions(unittest.TestCase):
+    def setUp(self):
+        # CLI fixtures exercise file edits; the independent watchdog is checked in the desktop VM.
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        command = pathlib.Path(tmp.name) / "systemd-run"
+        command.write_text("#!/bin/sh\nexit 0\n")
+        command.chmod(0o755)
+        env = patch.dict(os.environ, {"PATH": tmp.name + ":" + os.environ["PATH"]})
+        env.start()
+        self.addCleanup(env.stop)
+
     def test_display_lists_low_refresh_modes(self):
         monitor = {"width": 1920, "height": 1080, "availableModes": ["3840x2160@30.00Hz", "1920x1080@60.00Hz", "1920x1080@50.00Hz"]}
         with tempfile.TemporaryDirectory() as tmp:
