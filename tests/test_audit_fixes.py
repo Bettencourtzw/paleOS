@@ -185,4 +185,21 @@ class AuditFixes(unittest.TestCase):
         self.assertEqual(run.returncode,0,run.stderr)
         self.assertIn('Steam deferred',run.stdout)
 
+    def test_steam_accepts_matching_legacy_variant_and_hybrid_integrated_gpu(self):
+        cases=[('VGA NVIDIA GP104 [10de:1b80]', 'nvidia-580xx-utils', '580.1-1', '580.1-2', 0),
+               ('VGA NVIDIA GP104 [10de:1b80]', 'nvidia-580xx-utils', '580.1-1', '580.2-1', 2),
+               ('VGA NVIDIA AD104 [10de:1234]', 'nvidia-utils-beta', '600.1-1', '600.1-1', 0),
+               ('VGA Intel [8086:1234]\n3D NVIDIA GP104 [10de:1b80]', '', '', '', 0)]
+        for gpu,utils,version,version32,expected in cases:
+            with self.subTest(gpu=gpu,utils=utils,version32=version32), tempfile.TemporaryDirectory() as tmp:
+                h=Path(tmp)
+                self.fake(h,'lspci',"printf '%s\\n' '"+gpu+"'")
+                self.fake(h,'pacman',f'case "$*" in "-Qq") echo "{utils}" ;; "-Q {utils}") echo "{utils} {version}" ;; "-Q lib32-{utils}") echo "lib32-{utils} {version32}" ;; esac')
+                run=subprocess.run(['bash',ROOT/'bin/paleos-gaming'],env={**self.env(h),'PALEOS_GAMING_DRYRUN':'1'},capture_output=True,text=True)
+                self.assertEqual(run.returncode,expected,run.stderr+run.stdout)
+                if expected==0:
+                    self.assertIn('steam',run.stdout.splitlines())
+                    self.assertNotIn('nvidia-utils',run.stdout.splitlines())
+                    self.assertNotIn('lib32-nvidia-utils',run.stdout.splitlines())
+
 if __name__ == '__main__': unittest.main()
