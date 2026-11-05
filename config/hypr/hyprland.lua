@@ -7,6 +7,8 @@ local home = os.getenv("HOME")
 -- monitors.lua holds your monitor settings (Display panel, or edit it: saving applies it right away).
 -- The first time a monitor is connected it gets its highest resolution that does 60 Hz (a monitor that
 -- can't do 60 gets the rate closest to it), saved to monitors.lua. From then on the saved line is used.
+-- Restore an interrupted preview before reading monitor rules after a reboot.
+os.execute('"$HOME/.local/bin/display" recover-boot')
 local monitors_file = home .. "/.config/hypr/monitors.lua"
 local named, set_monitor = {}, hl.monitor
 hl.monitor = function(spec)
@@ -75,7 +77,7 @@ hl.on("hyprland.start", function()
         .. "; systemctl --user reset-failed; systemctl --user start xdg-desktop-portal")
     hl.exec_cmd("mako")
     hl.exec_cmd("swayosd-server")
-    hl.exec_cmd("hyprpaper")
+    hl.exec_cmd("~/.local/bin/paleos-wallpaper")
     hl.exec_cmd("gsettings set org.gnome.desktop.interface color-scheme prefer-dark")
 end)
 

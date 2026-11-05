@@ -49,7 +49,7 @@ FloatingWindow {
     }
     Process { id: run; onExited: { scan.running = false; scan.running = true } }
     function pickImage(f) {
-        run.command = ["bash", "-c", 'ln -sfn "$1" ~/.config/hypr/wallpaper && { pkill -x hyprpaper; setsid -f hyprpaper >/dev/null 2>&1; }', "_", f]
+        run.command = ["bash", "-c", 'ln -sfn "$1" ~/.config/hypr/wallpaper && setsid -f ~/.local/bin/paleos-wallpaper >/dev/null 2>&1', "_", f]
         run.running = true; currentImage = f; set("background", "static")
     }
     FileDialog {
@@ -78,7 +78,7 @@ FloatingWindow {
         Item { width: parent.width; height: 14
             Hint { width: parent.width - value.width - 12; elide: Text.ElideRight; text: sl.text }
             Hint { id: value; anchors.right: parent.right; text: sl.shown; color: Theme.fg } }
-        Level { width: parent.width; value: (sl.value - sl.from) / (sl.to - sl.from); onMoved: v => sl.changed(sl.from + v * (sl.to - sl.from)) }
+        Level { width: parent.width; accessibleName: sl.text; value: (sl.value - sl.from) / (sl.to - sl.from); onMoved: v => sl.changed(sl.from + v * (sl.to - sl.from)) }
     }
     component Card: Rectangle {   // an animated background card with live preview
         id: card

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# swaybg supports shared-memory buffers, including software-rendered virtual GPUs.
+set -euo pipefail
+pkill -u "$(id -u)" -x hyprpaper || true
+pkill -u "$(id -u)" -x swaybg || true
+exec swaybg -i "$HOME/.config/hypr/wallpaper" -m fill

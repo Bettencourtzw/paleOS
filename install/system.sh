@@ -15,10 +15,21 @@ if [[ -n $have && $(vercmp "$have" 0.57) -lt 0 ]]; then
   echo "Your Hyprland ($have) is older than 0.57, which paleOS's config needs."
   ask "Upgrade the system now?" y && PALEOS_UPDATE=1 || { echo "Stopping — upgrade first with: sudo pacman -Syu"; exit 1; }
 fi
-if pacman -Qq pulseaudio >/dev/null 2>&1; then       # replaced by PipeWire (pipewire-pulse)
-  echo "Replacing PulseAudio with PipeWire."; pacman -Rdd --noconfirm $(pacman -Qq pulseaudio pulseaudio-bluetooth 2>/dev/null)
+# Let pacman resolve conflicts and download replacements before committing changes.
+# Its default for removing a conflicting package is no: ask explicitly on existing audio setups.
+pac_args=(--needed --noconfirm)
+if pacman -Qq pulseaudio >/dev/null 2>&1; then
+  echo "Approve PulseAudio replacement in the single pacman transaction below."
+  pac_args=(--needed)
 fi
-if [[ ${PALEOS_UPDATE:-} == 1 ]]; then pacman -Syu --needed --noconfirm $pkgs; else pacman -S --needed --noconfirm $pkgs; fi
+if [[ ${PALEOS_UPDATE:-} == 1 ]]; then pacman -Syu "${pac_args[@]}" $pkgs; else pacman -S "${pac_args[@]}" $pkgs; fi
+
+backup=$(mktemp -d /var/lib/paleos-backup-XXXXXXXX)
+for f in /etc/sysctl.d/99-paleos.conf /etc/systemd/resolved.conf.d/paleos.conf /etc/NetworkManager/conf.d/paleos.conf /etc/security/faillock.conf /etc/mkinitcpio.conf /etc/sddm.conf.d/paleos.conf /etc/kernel/cmdline /etc/default/grub /boot/loader/entries/*.conf /etc/ufw; do
+  [[ -e $f || -L $f ]] || continue
+  mkdir -p "$backup$(dirname "$f")"; cp -a "$f" "$backup$f"
+done
+echo "System configuration backup: $backup"
 
 # 2. the Rust app indexer used by the menu (prebuilt on the ISO, otherwise compiled once)
 if [[ -f bin/pale-apps ]]; then      # (-f: the ISO copy loses its executable bit)
@@ -41,11 +52,26 @@ install -Dm644 system/sysctl.d/99-paleos.conf /etc/sysctl.d/99-paleos.conf
 install -Dm644 system/resolved.conf.d/paleos.conf /etc/systemd/resolved.conf.d/paleos.conf
 install -Dm644 system/NetworkManager/paleos.conf /etc/NetworkManager/conf.d/paleos.conf
 # inside the ISO installer's chroot /etc/resolv.conf is a temporary mount; the installer links it afterwards
-systemctl enable --now systemd-resolved 2>/dev/null || systemctl enable systemd-resolved   # (no --now in a chroot)
+chroot=${PALEOS_CHROOT:-0}
+if systemd-detect-virt --chroot --quiet; then chroot=1; fi
+systemctl enable systemd-resolved ufw
+if [[ $chroot == 1 ]]; then
+  # Configure the target service without changing the live installer's kernel firewall.
+  sed -i 's/^ENABLED=.*/ENABLED=yes/' /etc/ufw/ufw.conf
+else
+  systemctl start systemd-resolved
+  sysctl --system >/dev/null 2>&1 || true
+  if [[ -n ${SSH_CONNECTION:-} ]]; then
+    read -r peer _ _ port <<<"$SSH_CONNECTION"
+    ufw allow from "$peer" to any port "$port" proto tcp
+    ufw --force enable
+  elif systemctl is-active --quiet sshd; then
+    echo "SSH is active: leaving firewall activation to the administrator to preserve access."
+  else
+    ufw --force enable
+  fi
+fi
 findmnt -n /etc/resolv.conf >/dev/null || ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
-sysctl --system >/dev/null 2>&1 || true
-ufw default deny incoming >/dev/null; ufw default allow outgoing >/dev/null; ufw --force enable >/dev/null 2>&1 || true
-systemctl enable ufw
 # 10 wrong passwords lock the account for 10 minutes (Arch default is 3)
 sed -i -E "s/^#? *deny *=.*/deny = 10/" /etc/security/faillock.conf
 
@@ -57,7 +83,16 @@ systemctl enable bluetooth power-profiles-daemon
 bash install/nvidia.sh
 
 # 6. login screen + boot splash
-if ask "Install the paleOS login screen and boot splash?" y; then
+choice=/var/lib/paleos/login-screen
+mkdir -p /var/lib/paleos
+login=n
+if [[ ${PALEOS_REAPPLY:-} == 1 ]]; then
+  # Older installations have no receipt: only maintain an already selected paleOS theme.
+  if [[ -f $choice ]]; then login=$(cat "$choice")
+  elif [[ -f /etc/sddm.conf.d/paleos.conf ]] && systemctl is-enabled --quiet sddm; then login=y; fi
+elif ask "Install the paleOS login screen and boot splash?" y; then login=y; fi
+printf '%s\n' "$login" > "$choice"
+if [[ $login == y ]]; then
   install -d /usr/share/sddm/themes/arch-dark /usr/share/plymouth/themes/arch-dark /etc/sddm.conf.d
   install -m644 themes/sddm-arch-dark/* /usr/share/sddm/themes/arch-dark/
   install -m644 themes/plymouth-arch-dark/* /usr/share/plymouth/themes/arch-dark/

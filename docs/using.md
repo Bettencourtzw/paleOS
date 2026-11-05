@@ -110,3 +110,7 @@ network, sound, display. Each icon opens a small panel; click outside it or pres
 
 By default the screensaver starts after 5 minutes (an animated Arch logo) and the screen locks after 10.
 Change the timings in Power settings, or toggle idle locking with `SUPER + CTRL + I`.
+
+Display changes are previews: choose **Keep display settings** within 20 seconds or the previous monitor configuration is restored, even if the panel closes. HDR is offered only when the monitor reports HDR metadata. From a terminal, use `display confirm` or `display revert`. If another process edits the monitor file during a preview, the saved original remains in `~/.config/hypr/monitors.lua.pending` for manual recovery instead of overwriting those edits.
+
+Steam setup selects both 64-bit and 32-bit Vulkan drivers for detected AMD/Intel GPUs. NVIDIA variants require matching driver libraries; unsupported or incomplete setups stop with instructions instead of choosing a conflicting provider. These checks do not replace testing on your physical GPU.

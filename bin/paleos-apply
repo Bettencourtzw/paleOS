@@ -16,12 +16,13 @@ def write_if_changed(path, text):
 
 # windows: gaps, border, rounding, blur, animations -> ~/.config/hypr/paleos.lua (loaded last by hyprland.lua)
 g, lua = int(S["gaps"]), lambda b: str(bool(b)).lower()
-write_if_changed(H("~/.config/hypr/paleos.lua"),
+hypr_changed = write_if_changed(H("~/.config/hypr/paleos.lua"),
     "-- Written by the Customize app (paleos-apply). Change it there, not here.\n"
     f"hl.config({{ general = {{ gaps_in = {max(0, g // 2 - 1)}, gaps_out = {g}, border_size = {int(S['borderSize'])} }},\n"
     f"  decoration = {{ rounding = {int(S['rounding'])}, blur = {{ enabled = {lua(S['blur'])} }} }},\n"
     f"  animations = {{ enabled = {lua(S['animations'])} }} }})\n")
-subprocess.run(["hyprctl", "reload"], capture_output=True)
+if hypr_changed:
+    subprocess.run(["hyprctl", "reload"], capture_output=True)
 
 # idle: screensaver + lock
 idle = "general {\n    lock_cmd = pidof hyprlock || hyprlock\n    before_sleep_cmd = loginctl lock-session\n}\n"

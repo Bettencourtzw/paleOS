@@ -8,33 +8,35 @@ dir=${PALEOS_DIR:-$HOME/.local/share/paleOS}
 
 state=~/.local/state/paleos/applied        # last version fully applied (an update that failed is retried)
 if [[ -d $dir/.git ]]; then
-  old=$(cat "$state" 2>/dev/null || git -C "$dir" rev-parse HEAD)
+  old=$(cat "$state" 2>/dev/null || true)
   git -C "$dir" fetch -q --depth 50 origin main
   new=$(git -C "$dir" rev-parse FETCH_HEAD)
   [[ $old == "$new" && $(git -C "$dir" rev-parse HEAD) == "$new" ]] && { echo "paleOS is up to date."; exit 0; }
   echo "What's new:"; git -C "$dir" log --format='  • %s' "$old..$new" 2>/dev/null | head -20 || true
-  changed=$(git -C "$dir" diff --name-only "$old" "$new" 2>/dev/null || echo all)
+  changed=all
+  [[ -n $old ]] && changed=$(git -C "$dir" diff --name-only "$old" "$new" 2>/dev/null || echo all)
 else
   # installed from the ISO without internet, or by hand: switch to a git checkout
   echo "Getting paleOS from GitHub…"
   tmp=$(mktemp -d); git clone -q --depth 1 "$REPO_URL" "$tmp/paleOS"
   [[ -d $dir ]] && mv "$dir" "$dir.old-$(date +%Y%m%d-%H%M%S)"
   mkdir -p "$(dirname "$dir")"; mv "$tmp/paleOS" "$dir"; rmdir "$tmp"
-  changed=all; new=
+  changed=all; new=$(git -C "$dir" rev-parse HEAD)
 fi
 read -rp "Update now? [Y/n] " a; [[ ${a:-y} =~ ^[Yy] ]] || exit 0
 [[ -n $new ]] && git -C "$dir" reset -q --hard "$new"
 
 # system part (packages, login screen, security settings) only when those files changed
-if [[ $changed == all ]] || grep -qE '^(packages\.txt|install/(system|nvidia)\.sh|system/|themes/|tools/)' <<<"$changed"; then
+if [[ $changed == all ]] || grep -qE '^(packages\.txt|install/|system/|themes/|tools/)' <<<"$changed"; then
   echo "System files changed — your password is needed."
   grep -q '^tools/' <<<"$changed" && rm -f "$dir/bin/pale-apps"   # rebuild the app indexer from new source
-  sudo env PALEOS_YES=1 PALEOS_USER="$USER" bash "$dir/install/system.sh"
+  sudo env SSH_CONNECTION="${SSH_CONNECTION:-}" PALEOS_YES=1 PALEOS_REAPPLY=1 PALEOS_USER="$USER" bash "$dir/install/system.sh"
 fi
 
 # user part, keeping the keyboard layout you use now
 km=$(sed -n 's/^ *kb_layout = "\([^"]*\)".*/\1/p' ~/.config/hypr/hyprland.lua 2>/dev/null | head -1)
-PALEOS_KEYMAP=${km:-us} bash "$dir/install/user.sh"
+variant=$(sed -n 's/^ *kb_variant = "\([^"]*\)".*/\1/p' ~/.config/hypr/hyprland.lua 2>/dev/null | head -1)
+PALEOS_XKB_LAYOUT=${km:-us} PALEOS_XKB_VARIANT=${variant:-} bash "$dir/install/user.sh"
 [[ -f ~/.config/paleos/settings.json ]] && { ~/.local/bin/paleos-apply >/dev/null 2>&1 || true; }   # your Customize settings
 [[ -n ${new:-} ]] && { mkdir -p "$(dirname "$state")"; echo "$new" > "$state"; }
 

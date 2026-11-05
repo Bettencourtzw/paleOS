@@ -13,7 +13,7 @@
 | Step | Choices |
 |---|---|
 | Kernel | `linux` (standard), `linux-zen` (desktop responsiveness), `linux-lts` (long-term support) |
-| Language & keyboard | Any locale and console keymap; the desktop uses the same layout |
+| Language & keyboard | Supported locales and console keymaps; systemd converts the desktop layout and variant |
 | Timezone | Detected automatically — press Enter to keep it |
 | Account | Computer name, username, password |
 | Disk | **Erase a disk**, or **install alongside** what's there using free space (keeps Windows) |
@@ -44,7 +44,9 @@ git clone https://github.com/Bettencourtzw/paleOS && cd paleOS && ./install.sh
 What it does — and doesn't do:
 
 - **Doesn't force an update.** It asks; the default is no. It only insists if your Hyprland is too old for the config (0.57+).
-- **Backs up** any config it replaces to `~/.config/paleos-backup-<date>` (moved, not merged).
+- **Backs up** replaced config folders and user helpers to `~/.config/paleos-backup-<date>-<pid>` (helpers are in `bin/`). System configuration backups are printed under `/var/lib/paleos-backup-*`. Restore only the files you intend to undo.
+- Updates remember whether you opted into the login screen. Unrecorded older installations do not take over another display manager.
+- Existing PulseAudio setups require confirmation of pacman’s replacement transaction; packages are never removed in advance.
 - **Keeps your choices** on re-runs: monitor settings and wallpaper stay as you left them.
 - **Sets up NVIDIA graphics** if it finds an NVIDIA card (GTX 16 / RTX 20 series or newer): installs the
   driver if you don't have one, loads it at boot (so the boot splash and login screen show on it) and

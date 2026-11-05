@@ -1,11 +1,11 @@
 # paleOS — only the OS layer. Add your own apps on top.
 
 # Desktop
-hyprland hyprlock hypridle hyprpaper hyprpicker hyprsunset xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
+hyprland hyprlock hypridle swaybg hyprpicker hyprsunset xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
 waybar quickshell qt6-multimedia qt6-multimedia-ffmpeg rofi rofi-calc rofi-emoji mako swayosd foot xdg-terminal-exec nautilus
 
 # Tools used by the menu, screenshots and panels
-grim slurp satty wl-clipboard playerctl brightnessctl libnotify jq python neovim fzf btop fastfetch xdg-utils pciutils gtk3
+grim slurp satty wl-clipboard playerctl brightnessctl libnotify jq python python-gobject neovim fzf btop fastfetch xdg-utils pciutils gtk3
 
 # Sound, network, bluetooth
 pipewire wireplumber pipewire-pulse rtkit networkmanager bluez bluez-utils
